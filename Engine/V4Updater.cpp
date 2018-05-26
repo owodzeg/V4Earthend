@@ -61,7 +61,7 @@ void V4Updater::Init()
         fpsclock.restart();
 
         window.clear(sf::Color::White);
-
+        earthend.Init();
         window.display();
 
         keyMap.clear();
