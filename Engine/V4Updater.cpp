@@ -11,7 +11,7 @@ V4Updater::V4Updater()
 
 void V4Updater::Init()
 {
-    sf::RenderWindow window(sf::VideoMode(1280,720),"Earthend");
+    sf::RenderWindow window(sf::VideoMode(1280,720),"Patafour Launcher");
 
     window.setFramerateLimit(240);
     window.setKeyRepeatEnabled(false);
@@ -60,8 +60,9 @@ void V4Updater::Init()
         fps = float(1000000) / fpsclock.getElapsedTime().asMicroseconds();
         fpsclock.restart();
 
-        window.clear(sf::Color::White);
-        earthend.Init();
+        window.clear(sf::Color::Black);
+        earthend.fps = fps;
+        earthend.Init(window);
         window.display();
 
         keyMap.clear();
