@@ -6,43 +6,33 @@ Download::Download()
 
 }
 
-void Download::downloadFile(const std::string& Host, const std::string& RemoteFile, const std::string& LocalFile, unsigned short Port)
+void Download::dl_file(const std::string& host, const std::string& web_file, const std::string& local_file)
 {
-    sf::Http Http;
-    sf::Http::Request Request;
-    unsigned int FileSize = 0;
+    sf::Http http;
+    sf::Http::Request request;
 
-    Http.setHost(Host,Port);
-    Request.setMethod(sf::Http::Request::Get);
-    Request.setUri(RemoteFile);
+    http.setHost(host,0);
+    request.setMethod(sf::Http::Request::Get);
+    request.setUri(web_file);
 
-    sf::Http::Response Page = Http.sendRequest(Request);//Get the data
+    sf::Http::Response page = http.sendRequest(request);//Get the data
 
-    FileSize = Page.getBody().size();//Get the size that was returned
-
-    std::string FileContainer = Page.getBody();
-    std::ofstream File(LocalFile.c_str(), std::ios::out | std::ios::binary);
-    File.write(FileContainer.c_str(), FileSize);//Write the file
-    File.close();
+    std::string file_str = page.getBody();
+    std::ofstream file(local_file, std::ios::out | std::ios::binary);
+    file.write(file_str.c_str(), file_str.size());//Write the file
+    file.close();
 }
 
-string Download::downloadString(const std::string& Host, const std::string& RemoteFile, unsigned short Port)
+///Retrieve a string value from web
+///dl_str("dl.patafourgame.com","/sample.txt");
+string Download::dl_str(const std::string& host, const std::string& file)
 {
-    sf::Http Http;
-    sf::Http::Request Request;
-    unsigned int FileSize = 0;
+    sf::Http http;
+    sf::Http::Request request;
 
-    Http.setHost(Host,Port);
-    Request.setMethod(sf::Http::Request::Get);
-    Request.setUri(RemoteFile);
+    http.setHost(host,0);
+    request.setMethod(sf::Http::Request::Get);
+    request.setUri(file);
 
-    sf::Http::Response Page = Http.sendRequest(Request);//Get the data
-
-    FileSize = Page.getBody().size();//Get the size that was returned
-
-    std::string FileContainer = Page.getBody();
-
-    return FileContainer;
-
-    ///Unfinished, doesn't work, doesn't use!
+    return http.sendRequest(request).getBody();
 }

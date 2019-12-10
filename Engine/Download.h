@@ -11,8 +11,8 @@ class Download
     public:
     Download();
 
-    void downloadFile(const std::string& Host, const std::string& RemoteFile, const std::string& LocalFile, unsigned short Port = 0);
-    string downloadString(const std::string& Host, const std::string& RemoteFile, unsigned short Port = 0);
+    void dl_file(const std::string& host, const std::string& web_file, const std::string& local_file);
+    string dl_str(const std::string& host, const std::string& file);
 };
 
 #endif // DOWNLOAD_H
