@@ -1,15 +1,17 @@
 #include "Earthend.h"
+#include <SFML/Graphics.hpp>
 
 using namespace std;
 
 Earthend::Earthend()
 {
-
+    test_bg.Load("earthend");
+    a_baby.LoadConfig("resources/units/meden.p4a");
 }
 
 void Earthend::getWebFileList()
 {
-    web_file_list = download.downloadString("pata.fufuwu.site","/storage/patafour/getfiles.php",0);
+    web_file_list = download.dl_str("dl.patafourgame.com","/sample.txt");
     cout << web_file_list << endl;
 }
 
@@ -202,23 +204,14 @@ void Earthend::downloadFile()
 
 }
 
-void Earthend::Init()
+void Earthend::Init(sf::RenderWindow& window)
 {
-    if(finish == false)
-    {
-        ///updater code
-        getWebFileList();
-        getLocalFileList(".");
+    ///updater code
+    camera.Work(window,fps);
+    test_bg.setCamera(camera);
+    test_bg.Draw(window);
 
-        for(int i=0; i<local_files.size(); i++)
-        {
-            cout << "Hash of " << local_files[i] << endl;
-            cout << getFileHash(local_files[i]) << endl;
-        }
-
-        splitWebFileList();
-        verifyFiles();
-
-        finish = true;
-    }
+    a_baby.fps = fps;
+    a_baby.x += 0.1;
+    a_baby.Draw(window);
 }

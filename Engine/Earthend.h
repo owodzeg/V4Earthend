@@ -2,6 +2,10 @@
 #define EARTHEND_H
 
 #include "Download.h"
+#include "Background.h"
+#include "Camera.h"
+#include "P4A.h"
+#include "AnimatedObject.h"
 #include "MD5.h"
 #include <iostream>
 #include <windows.h>
@@ -13,6 +17,12 @@ class Earthend
 {
     public:
     Download download;
+    Camera camera;
+    P4A handle;
+    AnimatedObject a_baby;
+
+    float fps;
+
     string web_file_list;
 
     vector<string> web_files; ///web file location
@@ -25,6 +35,7 @@ class Earthend
     vector<string> files_remove; ///files to remove
 
     bool finish = false;
+    Background test_bg;
 
     Earthend();
 
@@ -36,7 +47,7 @@ class Earthend
     void verifyFiles();
     void downloadFile();
 
-    void Init();
+    void Init(sf::RenderWindow& window);
 };
 
 #endif // EARTHEND_H
