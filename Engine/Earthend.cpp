@@ -1,12 +1,263 @@
 #include "Earthend.h"
+#include <time.h>
+#include <cstdlib>
 #include <SFML/Graphics.hpp>
 
 using namespace std;
 
+string wrap_text(string input, int box_width, sf::Font font, int character_size)
+{
+    cout << "wrap_text(" << input << ", " << box_width << ")" << endl;
+
+    string temp = "";
+    vector<string> words;
+
+    for(int i=0; i<input.size(); i++)
+    {
+        if((input[i] == ' ') || (input[i] == '\n') || (i == input.size()-1))
+        {
+            if(i == input.size()-1)
+            temp += input[i];
+
+            if(input[i] == '\n')
+            temp += input[i];
+
+            cout << "Registered word: " << temp << endl;
+            words.push_back(temp);
+            temp = "";
+        }
+        else
+        {
+            temp += input[i];
+        }
+    }
+
+    string full = "";
+
+    string prevtemp = "";
+    int wordcount = 0;
+    temp = "";
+
+    for(int i=0; i<words.size(); i++)
+    {
+        prevtemp = temp;
+
+        if(words[i].find("\n") != std::string::npos)
+        {
+            cout << "String found to contain a new line character" << endl;
+            string prefull = prevtemp + " " + words[i];
+
+            sf::Text t_temp;
+            t_temp.setFont(font);
+            t_temp.setCharacterSize(character_size);
+            t_temp.setString(prefull);
+
+            if(t_temp.getGlobalBounds().width >= box_width)
+            {
+                full += prevtemp + '\n';
+                i--;
+            }
+            else
+            {
+                full += prefull;
+            }
+
+            cout << "Added \"" << prevtemp + words[i] << "\" to the output" << endl;
+
+            i++;
+            temp = "";
+            wordcount = 0;
+        }
+
+        if(wordcount>0)
+        temp += " ";
+
+        temp += words[i];
+        wordcount++;
+
+        sf::Text t_temp;
+        t_temp.setFont(font);
+        t_temp.setCharacterSize(character_size);
+        t_temp.setString(temp);
+
+        cout << "Testing string \"" << temp << "\", " << wordcount << " words, size: " << t_temp.getGlobalBounds().width << endl;
+
+        if(t_temp.getGlobalBounds().width >= box_width)
+        {
+            if(wordcount > 1)
+            {
+                cout << "String exceeded the max box width (" << box_width << " vs " << t_temp.getGlobalBounds().width << ")" << endl;
+                full += prevtemp;
+                full += '\n';
+
+                cout << "Added \"" << prevtemp << "\" to the output" << endl;
+
+                i -= 1;
+                temp = "";
+                wordcount = 0;
+            }
+            else
+            {
+                string ltemp = "";
+
+                ///if its just a long ass word
+                for(int e=0; e<temp.size(); e++)
+                {
+                    ltemp += temp[e];
+
+                    sf::Text t_ltemp;
+                    t_ltemp.setFont(font);
+                    t_ltemp.setCharacterSize(character_size);
+                    t_ltemp.setString(ltemp);
+
+                    if(t_ltemp.getGlobalBounds().width >= box_width-30)
+                    {
+                        full += ltemp;
+                        full += "-";
+                        full += '\n';
+
+                        ltemp = "";
+                    }
+                }
+
+                ///adding remains
+                temp = ltemp;
+                wordcount = 1;
+            }
+        }
+    }
+
+    cout << "End of word list, adding remains to the full string" << endl;
+    full += temp;
+
+    return full;
+}
+
 Earthend::Earthend()
 {
+    srand(time(NULL));
+    int baby = rand() % 8 + 1;
+
     test_bg.Load("earthend");
-    a_baby.LoadConfig("resources/units/meden.p4a");
+
+    switch(baby)
+    {
+        case 1:
+        {
+            a_baby.LoadConfig("resources/units/hatapon.p4a");
+            break;
+        }
+        case 2:
+        {
+            a_baby.LoadConfig("resources/units/ton.p4a");
+            break;
+        }
+        case 3:
+        {
+            a_baby.LoadConfig("resources/units/chin.p4a");
+            break;
+        }
+        case 4:
+        {
+            a_baby.LoadConfig("resources/units/kan.p4a");
+            break;
+        }
+        case 5:
+        {
+            a_baby.LoadConfig("resources/units/meden.p4a");
+            break;
+        }
+        case 6:
+        {
+            a_baby.LoadConfig("resources/units/zigo.p4a");
+            break;
+        }
+        case 7:
+        {
+            a_baby.LoadConfig("resources/units/gong.p4a");
+            break;
+        }
+        case 8:
+        {
+            a_baby.LoadConfig("resources/units/hero.p4a");
+            break;
+        }
+    }
+
+    rect_1.setSize(sf::Vector2f(1280,720));
+    rect_2.setSize(sf::Vector2f(445,720));
+
+    rect_1.setFillColor(sf::Color(0,0,0,100));
+    rect_2.setFillColor(sf::Color(0,0,0,128));
+
+    p4kaku.loadFromFile("resources/fonts/p4kaku.ttf");
+
+    tex_logo.loadFromFile("resources/graphics/ui/logo.png");
+    tex_box.loadFromFile("resources/graphics/ui/box.png");
+    tex_sword.loadFromFile("resources/graphics/ui/sword.png");
+    tex_pata.loadFromFile("resources/graphics/ui/pata.png");
+    tex_eye.loadFromFile("resources/graphics/ui/eye.png");
+
+    s_logo.setTexture(tex_logo);
+    s_logo.setPosition(188,16);
+
+    s_loginbox.setTexture(tex_box);
+    s_emailbox.setTexture(tex_box);
+    s_passbox.setTexture(tex_box);
+
+    s_loginbox.setOrigin(s_loginbox.getGlobalBounds().width/2,s_loginbox.getGlobalBounds().height/2);
+    s_emailbox.setOrigin(s_emailbox.getGlobalBounds().width/2,s_emailbox.getGlobalBounds().height/2);
+    s_passbox.setOrigin(s_passbox.getGlobalBounds().width/2,s_passbox.getGlobalBounds().height/2);
+
+    t_username.setFont(p4kaku);
+    t_email.setFont(p4kaku);
+    t_password.setFont(p4kaku);
+    t_newsheader.setFont(p4kaku);
+    t_news.setFont(p4kaku);
+    t_login.setFont(p4kaku);
+    t_create.setFont(p4kaku);
+    t_playoffline.setFont(p4kaku);
+    t_version.setFont(p4kaku);
+
+    t_username.setFillColor(sf::Color::White);
+    t_email.setFillColor(sf::Color::White);
+    t_password.setFillColor(sf::Color::White);
+    t_newsheader.setFillColor(sf::Color::White);
+    t_news.setFillColor(sf::Color::White);
+    t_login.setFillColor(sf::Color::White);
+    t_create.setFillColor(sf::Color::White);
+    t_playoffline.setFillColor(sf::Color::White);
+    t_version.setFillColor(sf::Color(255,255,255,128));
+
+    t_username.setString("Username");
+    t_email.setString("Email");
+    t_password.setString("Password");
+    t_newsheader.setString("News feed");
+    t_news.setString(wrap_text("8 more days to the first Alpha Demo release.\n\nWe are having some troubles with getting done exactly everything we planned for the first V4 release, so please keep in mind that the game will be constantly updated and the screen you're looking at belongs to the Patafour Launcher, which will make sure to keep you up to date with all new updates and features.\n\nThanks for reading!", 420, p4kaku, 18));
+    t_login.setString("Log in");
+    t_create.setString("Create new account");
+    t_playoffline.setString("Play offline");
+    t_version.setString("build V4Hero-1.0.0");
+
+    t_username.setCharacterSize(24);
+    t_email.setCharacterSize(24);
+    t_password.setCharacterSize(24);
+    t_newsheader.setCharacterSize(24);
+    t_news.setCharacterSize(18);
+    t_login.setCharacterSize(24);
+    t_create.setCharacterSize(24);
+    t_playoffline.setCharacterSize(24);
+    t_version.setCharacterSize(24);
+
+    t_username.setOrigin(t_username.getGlobalBounds().width,t_username.getGlobalBounds().height/2);
+    t_email.setOrigin(t_email.getGlobalBounds().width,t_email.getGlobalBounds().height/2);
+    t_password.setOrigin(t_password.getGlobalBounds().width,t_password.getGlobalBounds().height/2);
+    t_newsheader.setOrigin(t_newsheader.getGlobalBounds().width/2,t_newsheader.getGlobalBounds().height/2);
+    t_news.setOrigin(0,0);
+    t_login.setOrigin(t_login.getGlobalBounds().width/2,t_login.getGlobalBounds().height/2);
+    t_create.setOrigin(t_create.getGlobalBounds().width/2,t_create.getGlobalBounds().height/2);
+    t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
+    t_version.setOrigin(t_version.getGlobalBounds().width/2,t_version.getGlobalBounds().height/2);
 }
 
 void Earthend::getWebFileList()
@@ -214,4 +465,46 @@ void Earthend::Init(sf::RenderWindow& window)
     a_baby.fps = fps;
     a_baby.x += 0.1;
     a_baby.Draw(window);
+
+    /// user interface
+
+    rect_2.setPosition(window.getSize().x-rect_2.getSize().x,0);
+
+    sf::View temp;
+    temp = window.getView();
+
+    window.setView(window.getDefaultView());
+
+    window.draw(rect_1);
+    window.draw(rect_2);
+
+    window.draw(s_logo);
+
+    s_loginbox.setPosition(480,240);
+    s_passbox.setPosition(480,320);
+
+    window.draw(s_loginbox);
+    window.draw(s_passbox);
+
+    t_username.setPosition(s_loginbox.getPosition().x-(s_loginbox.getGlobalBounds().width/2)-20,s_loginbox.getPosition().y-4);
+    t_password.setPosition(s_passbox.getPosition().x-(s_passbox.getGlobalBounds().width/2)-20,s_passbox.getPosition().y-4);
+
+    window.draw(t_username);
+    window.draw(t_password);
+
+    t_login.setPosition(400,388);
+    t_create.setPosition(400,422);
+    t_playoffline.setPosition(400,458);
+
+    window.draw(t_login);
+    window.draw(t_create);
+    window.draw(t_playoffline);
+
+    t_newsheader.setPosition(rect_2.getPosition().x+(window.getSize().x-rect_2.getPosition().x)/2,14);
+    t_news.setPosition(rect_2.getPosition().x+8,46);
+
+    window.draw(t_newsheader);
+    window.draw(t_news);
+
+    window.setView(temp);
 }

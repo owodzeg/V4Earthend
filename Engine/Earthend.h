@@ -21,6 +21,17 @@ class Earthend
     P4A handle;
     AnimatedObject a_baby;
 
+    sf::Font p4kaku;
+    sf::RectangleShape rect_1,rect_2;
+
+    sf::Texture tex_logo,tex_box,tex_sword,tex_pata,tex_eye;
+    sf::Sprite s_logo,s_loginbox,s_emailbox,s_passbox;
+
+    sf::Text t_username,t_email,t_password;
+    sf::Text t_newsheader,t_news;
+    sf::Text t_login,t_create,t_playoffline;
+    sf::Text t_version;
+
     float fps;
 
     string web_file_list;

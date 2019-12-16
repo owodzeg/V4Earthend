@@ -80,7 +80,7 @@ void PSprite::setPosition(float x, float y)
     lx = x/ratioX;
     ly = y/ratioY;
 
-    std::cout << x << " " << y << "  " << lx << " " << ly << std::endl;
+    //std::cout << x << " " << y << "  " << lx << " " << ly << std::endl;
 }
 void PSprite::setScale(float s){
     scaleX = s;
