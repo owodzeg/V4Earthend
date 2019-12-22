@@ -10,7 +10,7 @@ Download::Download()
 
 }
 
-void Download::dl_file(const std::string& host, const std::string& web_file, const std::string& local_file)
+bool Download::dl_file(const std::string& host, const std::string& web_file, const std::string& local_file)
 {
     ///make sure all directories create properly
     string sfile;
@@ -41,9 +41,15 @@ void Download::dl_file(const std::string& host, const std::string& web_file, con
     sf::Http::Response page = http.sendRequest(request);//Get the data
 
     std::string file_str = page.getBody();
+
+    if(file_str.size() <= 0)
+    return false;
+
     std::ofstream file(local_file, std::ios::out | std::ios::binary | std::ios::trunc);
     file.write(file_str.c_str(), file_str.size());//Write the file
     file.close();
+
+    return true;
 }
 
 string Download::dl_str_post(const std::string& host, const std::string& file, const std::string& postfields)
