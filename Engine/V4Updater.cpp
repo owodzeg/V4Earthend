@@ -91,6 +91,10 @@ void V4Updater::Init()
 
                 break;
             }
+            else
+            {
+                break;
+            }
         }
 
         window.display();
