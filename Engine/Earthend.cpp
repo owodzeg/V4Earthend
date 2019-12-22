@@ -193,7 +193,7 @@ Earthend::Earthend()
     {
         cout << "No resources folder to be found, enable firstrun" << endl;
         fr = true;
-        state = 0;
+        state = -1;
     }
     else
     {
@@ -234,6 +234,8 @@ Earthend::Earthend()
         FR_pon2.setTexture(FR_t_pon);
         FR_eye2.setTexture(FR_t_eye);
 
+        FR_tx_noconnection.setFont(FR_p4kaku);
+        FR_tx_retry.setFont(FR_p4kaku);
         FR_tx_firstrun1.setFont(FR_p4kaku);
         FR_tx_firstrun2.setFont(FR_p4kaku);
         FR_tx_installdesc.setFont(FR_p4kaku);
@@ -250,6 +252,8 @@ Earthend::Earthend()
         FR_tx_runlauncher.setFont(FR_p4kaku);
         FR_tx_exit.setFont(FR_p4kaku);
 
+        FR_tx_noconnection.setCharacterSize(30);
+        FR_tx_retry.setCharacterSize(30);
         FR_tx_firstrun1.setCharacterSize(30);
         FR_tx_firstrun2.setCharacterSize(30);
         FR_tx_installdesc.setCharacterSize(20);
@@ -265,6 +269,8 @@ Earthend::Earthend()
         FR_tx_runlauncher.setCharacterSize(24);
         FR_tx_exit.setCharacterSize(30);
 
+        FR_tx_noconnection.setString("Failed to connect to the Patafour Server.");
+        FR_tx_retry.setString("Retry");
         FR_tx_firstrun1.setString("It's your first time running Patafour!");
         FR_tx_firstrun2.setString("We need to configure a couple of things first.");
         FR_tx_installdesc.setString("Patafour's installation directory. Don't change it if you're unsure.");
@@ -279,6 +285,8 @@ Earthend::Earthend()
         FR_tx_runlauncher.setString("Run Patafour Launcher now");
         FR_tx_exit.setString("Exit");
 
+        FR_tx_noconnection.setFillColor(sf::Color::White);
+        FR_tx_retry.setFillColor(sf::Color::White);
         FR_tx_firstrun1.setFillColor(sf::Color::White);
         FR_tx_firstrun2.setFillColor(sf::Color::White);
         FR_tx_installdesc.setFillColor(sf::Color::White);
@@ -486,32 +494,14 @@ string Earthend::getFileHash(string filename)
     file.close();
 
     string data = o.str();
-                    /// duck
-                    /// substr(0): duck
-                    /// substr(1): uck
-                    /// substr(3): k
 
-                    /// substr(0,2): du
-                    /// substr(1,3): uck
-                    /// substr(2,1): c
-
-                    /// ./resources/earthend.png
-                    /// find_last_of("/"): 11
-                    /// substr(11 + 1): earthend.png
-
-    string cut = filename.substr(filename.find_last_of("\\")+1);
+    string cut = filename.substr(filename.find_last_of("\\/")+1);
 
     return cut+md5(data);
 }
 
 vector<string> Earthend::split(const std::string &s, char delim)
 {
-    ///apple,orange,banana
-    ///split()
-    ///vector[0] = apple
-    ///vector[1] = orange
-    ///vector[2] = banana
-
     std::vector<std::string> elems;
 
 	std::stringstream ss(s);
@@ -635,65 +625,186 @@ void Earthend::FirstRunDownload()
     FR_tx_status.setString("Checking latest version...");
     string version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=earthend");
 
-    cout << version << endl;
-
-    FR_tx_status.setString("Retrieving file list...");
-    string f_list = download.dl_str_post("dl.patafourgame.com","/getfiles.php","product_id=earthend&product_ver="+version);
-    //cout << "Files: " << endl << f_list << endl;
-
-    string file,start_dir;
-    vector<string> web_file,loc_file;
-
-    stringstream oss(f_list);
-    while(getline(oss,file,'\n'))
+    if(force_exit)
     {
-        if(file.find("START_DIR:") != std::string::npos)
+        state = -1;
+    }
+
+    cout << version << endl;
+    if((version == "") && (state != -1))
+    {
+        state = -1;
+    }
+    else
+    {
+        FR_tx_status.setString("Retrieving file list...");
+        string f_list = download.dl_str_post("dl.patafourgame.com","/getfiles.php","product_id=earthend&product_ver="+version);
+        //cout << "Files: " << endl << f_list << endl;
+
+        if(force_exit)
         {
-            start_dir = file.substr(file.find_first_of(":")+1);
+            state = -1;
+        }
+
+        if((f_list == "") && (state != -1))
+        {
+            state = -1;
         }
         else
         {
-            web_file.push_back(file);
-            file = file.substr(file.find(start_dir) + start_dir.size());
-            loc_file.push_back(file);
+            string file,start_dir;
+            vector<string> web_file,web_hash,loc_file;
+
+            stringstream oss(f_list);
+            while(getline(oss,file,'\n'))
+            {
+                if(file.find("START_DIR:") != std::string::npos)
+                {
+                    start_dir = file.substr(file.find_first_of(":")+1);
+                }
+                else
+                {
+                    cout << file << endl;
+                    vector<string> f_params = split(file,',');
+
+                    string fname = f_params[0];
+
+                    web_file.push_back(fname);
+                    fname = fname.substr(fname.find(start_dir) + start_dir.size());
+                    loc_file.push_back(fname);
+                    web_hash.push_back(f_params[1]);
+                }
+            }
+
+            for(int i=0; i<loc_file.size(); i++)
+            {
+                if(force_exit)
+                {
+                    state = -1;
+                    break;
+                }
+
+                bool shouldUpdate = true;
+
+                if(file_exists(installdir+"\\"+loc_file[i]))
+                {
+                    string cur_hash = getFileHash(installdir+"\\"+loc_file[i]);
+                    if(cur_hash == web_hash[i])
+                    {
+                        cout << "File already exists and doesn't need a replacement." << endl;
+                        shouldUpdate = false;
+                    }
+                    else
+                    {
+                        cout << "File has a different signature therefore it has been changed." << endl;
+                    }
+                }
+
+                if(shouldUpdate)
+                {
+                    FR_tx_status.setString("Downloading "+loc_file[i]);
+                    if(!download.dl_file("dl.patafourgame.com",web_file[i],installdir+"\\"+loc_file[i]))
+                    {
+                        state = -1;
+                        break;
+                    }
+
+                    string cur_hash = getFileHash(installdir+"\\"+loc_file[i]);
+                    cout << cur_hash << " " << web_hash[i];
+
+                    ///check the hashes
+                    if(cur_hash == web_hash[i])
+                    {
+                        cout << " verified" << endl;
+                    }
+                    else
+                    {
+                        cout << " incorrect. Redownload file" << endl;
+                        i--;
+                    }
+                }
+            }
+
+            if(state != -1)
+            {
+                if(force_exit)
+                {
+                    state = -1;
+                }
+
+                if(state != -1)
+                {
+                    FR_tx_status.setString("Finalizing...");
+
+                    ///create shortcut
+                    ofstream nircmd("nircmdc.exe", ios::binary | ios::trunc);
+                    nircmd.write(bundle.str_DATA_nircmdc.data(), bundle.str_DATA_nircmdc.size());
+                    nircmd.close();
+
+                    string scmd = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.desktop$\" \"Patafour\"";
+                    string scmd2 = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.programs$\\Patafour\" \"Launch Patafour\"";
+                    if(b_desktop)
+                    system(scmd.c_str());
+                    if(b_startmenu)
+                    system(scmd2.c_str());
+
+                    system("del nircmdc.exe");
+
+                    restart_clock.restart();
+                    while(restart_clock.getElapsedTime().asSeconds() < 3)
+                    {
+                        FR_tx_status.setString("Download finished!");
+                    }
+
+                    state = 2;
+                }
+            }
         }
     }
-
-    for(int i=0; i<loc_file.size(); i++)
-    {
-        FR_tx_status.setString("Downloading "+loc_file[i]);
-        download.dl_file("dl.patafourgame.com",web_file[i],installdir+"\\"+loc_file[i]);
-    }
-
-    FR_tx_status.setString("Finalizing...");
-
-    ///create shortcut
-    ofstream nircmd("nircmdc.exe", ios::binary | ios::trunc);
-    nircmd.write(bundle.str_DATA_nircmdc.data(), bundle.str_DATA_nircmdc.size());
-    nircmd.close();
-
-    string scmd = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.desktop$\" \"Patafour\"";
-    string scmd2 = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.programs$\\Patafour\" \"Launch Patafour\"";
-    if(b_desktop)
-    system(scmd.c_str());
-    if(b_startmenu)
-    system(scmd2.c_str());
-
-    system("del nircmdc.exe");
-
-    restart_clock.restart();
-    while(restart_clock.getElapsedTime().asSeconds() < 3)
-    {
-        FR_tx_status.setString("Download finished!");
-    }
-
-    state = 2;
 }
 
 void Earthend::Init(sf::RenderWindow& window)
 {
     switch(state)
     {
+        case -1:
+        {
+            window.clear(sf::Color(64,64,64));
+
+            FR_tx_noconnection.setOrigin(FR_tx_noconnection.getGlobalBounds().width/2,FR_tx_noconnection.getGlobalBounds().height/2);
+            FR_tx_retry.setOrigin(FR_tx_retry.getGlobalBounds().width/2,FR_tx_retry.getGlobalBounds().height/2);
+
+            FR_tx_noconnection.setPosition(window.getSize().x/2,window.getSize().y/2-40);
+            FR_tx_retry.setPosition(window.getSize().x/2,window.getSize().y/2+10);
+
+            FR_tx_retry.setFillColor(sf::Color::White);
+
+            if(mouseX > FR_tx_retry.getPosition().x-FR_tx_retry.getGlobalBounds().width/2+5)
+            {
+                if(mouseX < FR_tx_retry.getPosition().x+FR_tx_retry.getGlobalBounds().width/2+5)
+                {
+                    if(mouseY > FR_tx_retry.getPosition().y-FR_tx_retry.getGlobalBounds().height/2+5)
+                    {
+                        if(mouseY < FR_tx_retry.getPosition().y+FR_tx_retry.getGlobalBounds().height/2+10)
+                        {
+                            FR_tx_retry.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 0;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(FR_tx_noconnection);
+            window.draw(FR_tx_retry);
+
+            break;
+        }
+
         case 0:
         {
             window.clear(sf::Color(64,64,64));
@@ -1023,6 +1134,8 @@ void Earthend::Init(sf::RenderWindow& window)
 
 Earthend::~Earthend()
 {
+    force_exit = true;
+
     if(downloadThread.joinable())
     downloadThread.join();
 }

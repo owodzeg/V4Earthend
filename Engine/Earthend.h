@@ -20,6 +20,8 @@ using namespace std;
 class Earthend
 {
     public:
+    string launcher_ver = "v1.0.0";
+
     Download download;
     Camera camera;
     P4A handle;
@@ -30,6 +32,7 @@ class Earthend
     int mouseX,mouseY;
     bool mouseLeftClick;
     bool tlaunched = false;
+    bool force_exit = false;
 
     thread downloadThread;
     sf::Clock restart_clock;
@@ -47,6 +50,8 @@ class Earthend
     sf::Sprite FR_pon1,FR_eye1;
     sf::Sprite FR_pon2,FR_eye2;
 
+    sf::Text FR_tx_noconnection;
+    sf::Text FR_tx_retry;
     sf::Text FR_tx_firstrun1;
     sf::Text FR_tx_firstrun2;
     sf::Text FR_tx_installdesc;
