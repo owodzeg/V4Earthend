@@ -15,6 +15,8 @@ class V4Updater
     float fps = 60;
     sf::Clock fpsclock;
 
+    bool exit = false;
+
     int a = 0;
 
     public:

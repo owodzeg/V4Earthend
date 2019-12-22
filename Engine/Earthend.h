@@ -1,6 +1,8 @@
 #ifndef EARTHEND_H
 #define EARTHEND_H
 
+#include <SFML/System.hpp>
+#include <SFML/Graphics.hpp>
 #include "Download.h"
 #include "Background.h"
 #include "Camera.h"
@@ -10,6 +12,8 @@
 #include <iostream>
 #include <windows.h>
 #include <sstream>
+#include <thread>
+#include "Bundle/Bundle.h"
 
 using namespace std;
 
@@ -20,7 +24,53 @@ class Earthend
     Camera camera;
     P4A handle;
     AnimatedObject a_baby;
+    Bundle bundle;
 
+    bool fr = false;
+    int mouseX,mouseY;
+    bool mouseLeftClick;
+    bool tlaunched = false;
+
+    thread downloadThread;
+    sf::Clock restart_clock;
+    sf::Clock timeout_clock;
+
+    ///FIRST-RUN
+    sf::Font FR_p4kaku; ///font
+    sf::Texture FR_t_box,FR_t_dots; ///install dir
+    sf::Texture FR_t_checkbox,FR_t_mark; ///desktop shortcut
+    sf::Texture FR_t_pon,FR_t_eye; ///patapon loading animation
+
+    sf::Sprite FR_box,FR_dots;
+    sf::Sprite FR_checkbox,FR_mark;
+    sf::Sprite FR_checkbox2,FR_mark2;
+    sf::Sprite FR_pon1,FR_eye1;
+    sf::Sprite FR_pon2,FR_eye2;
+
+    sf::Text FR_tx_firstrun1;
+    sf::Text FR_tx_firstrun2;
+    sf::Text FR_tx_installdesc;
+    sf::Text FR_tx_installdir;
+    sf::Text FR_tx_desktop;
+    sf::Text FR_tx_startmenu;
+    sf::Text FR_tx_install;
+    sf::Text FR_tx_installinfo;
+    sf::Text FR_tx_downloading1;
+    sf::Text FR_tx_downloading2;
+    sf::Text FR_tx_status;
+
+    sf::Text FR_tx_finished;
+    sf::Text FR_tx_runlauncher;
+    sf::Text FR_tx_exit;
+
+    bool b_desktop = true;
+    bool b_startmenu = true;
+    bool b_run = true;
+    string installdir = "";
+
+    bool exit_launcher = false;
+
+    ///Regular mode
     sf::Font p4kaku;
     sf::RectangleShape rect_1,rect_2;
 
@@ -33,6 +83,7 @@ class Earthend
     sf::Text t_version;
 
     float fps;
+    int state = 0;
 
     string web_file_list;
 
@@ -50,6 +101,7 @@ class Earthend
 
     Earthend();
 
+    bool file_exists(string file);
     void getWebFileList();
     void getLocalFileList(const char* dirn);
     string getFileHash(string filename);
@@ -57,8 +109,10 @@ class Earthend
     void splitWebFileList();
     void verifyFiles();
     void downloadFile();
+    void FirstRunDownload();
 
     void Init(sf::RenderWindow& window);
+    ~Earthend();
 };
 
 #endif // EARTHEND_H

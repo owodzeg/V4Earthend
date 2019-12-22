@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "V4Updater.h"
+#include <windows.h>
 
 using namespace std;
 
@@ -62,7 +63,36 @@ void V4Updater::Init()
 
         window.clear(sf::Color::Black);
         earthend.fps = fps;
+        earthend.mouseX = mouseX;
+        earthend.mouseY = mouseY;
+        earthend.mouseLeftClick = mouseLeftClick;
         earthend.Init(window);
+
+        if(!earthend.mouseLeftClick)
+        mouseLeftClick = false;
+
+        if(earthend.exit_launcher)
+        {
+            if(earthend.b_run)
+            {
+                string dir = earthend.installdir+"\\Patafour.exe";
+                cout << dir << endl;
+                PROCESS_INFORMATION pi;
+                STARTUPINFO si;
+
+                ZeroMemory( & pi, sizeof( pi ) );
+                ZeroMemory( & si, sizeof( si ) );
+                si.cb = sizeof( si );
+
+                if(!CreateProcess(NULL, (LPSTR)dir.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+                {
+                    printf("Could not create process. (%ld)", GetLastError());
+                }
+
+                break;
+            }
+        }
+
         window.display();
 
         keyMap.clear();
