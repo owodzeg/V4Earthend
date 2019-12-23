@@ -96,7 +96,7 @@ void Camera::Work(sf::RenderWindow& window,float fps)
     if(debug_x_speed < 10)
     debug_x_speed = 10;
 
-    followobject_x += 0.1;
+    followobject_x += 25 / float(fps);
 
     /** Temporary movement code **/
 
