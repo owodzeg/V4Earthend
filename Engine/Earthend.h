@@ -32,6 +32,7 @@ class Earthend
     int mouseX,mouseY;
     bool mouseLeftClick;
     bool tlaunched = false;
+    bool t2launched = false;
     bool force_exit = false;
 
     thread downloadThread;
@@ -72,6 +73,7 @@ class Earthend
     bool b_startmenu = true;
     bool b_run = true;
     string installdir = "";
+    int total_size = 0;
 
     bool exit_launcher = false;
 
@@ -86,6 +88,21 @@ class Earthend
     sf::Text t_newsheader,t_news;
     sf::Text t_login,t_create,t_playoffline;
     sf::Text t_version;
+
+    sf::Text t_checkingupdates;
+    sf::Text t_updatefound1;
+    sf::Text t_updatefound2;
+    sf::Text t_updating;
+    sf::Text t_updating_per;
+    sf::Text t_updating_file;
+    sf::Text t_onlinewarning;
+    sf::Text t_noconnection1;
+    sf::Text t_noconnection2;
+    sf::Text t_tryagain;
+    sf::Text t_yes;
+    sf::Text t_no;
+    sf::Sprite pon1,eye1,pon2,eye2;
+    sf::Sprite s_sword;
 
     float fps;
     int state = 0;
@@ -107,14 +124,11 @@ class Earthend
     Earthend();
 
     bool file_exists(string file);
-    void getWebFileList();
-    void getLocalFileList(const char* dirn);
     string getFileHash(string filename);
     vector<string> split(const std::string &s, char delim);
-    void splitWebFileList();
-    void verifyFiles();
-    void downloadFile();
     void FirstRunDownload();
+    void CheckForUpdates();
+    void UpdateProduct(string productID);
 
     void Init(sf::RenderWindow& window);
     ~Earthend();

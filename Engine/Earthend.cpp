@@ -193,7 +193,7 @@ Earthend::Earthend()
     {
         cout << "No resources folder to be found, enable firstrun" << endl;
         fr = true;
-        state = -1;
+        state = 0;
     }
     else
     {
@@ -357,6 +357,23 @@ Earthend::Earthend()
             }
         }
 
+        tex_pata.loadFromFile("resources/graphics/ui/pon.png");
+        tex_eye.loadFromFile("resources/graphics/ui/eye.png");
+
+        tex_pata.setSmooth(true);
+        tex_eye.setSmooth(true);
+
+        pon1.setTexture(tex_pata);
+        eye1.setTexture(tex_eye);
+        pon2.setTexture(tex_pata);
+        eye2.setTexture(tex_eye);
+
+        pon1.setOrigin(pon1.getGlobalBounds().width/2,pon1.getGlobalBounds().height/2);
+        eye1.setOrigin(eye1.getGlobalBounds().width-4,eye1.getGlobalBounds().height-4);
+
+        pon2.setOrigin(pon2.getGlobalBounds().width/2,pon2.getGlobalBounds().height/2);
+        eye2.setOrigin(eye2.getGlobalBounds().width-4,eye2.getGlobalBounds().height-4);
+
         rect_1.setSize(sf::Vector2f(1280,720));
         rect_2.setSize(sf::Vector2f(445,720));
 
@@ -407,7 +424,7 @@ Earthend::Earthend()
         t_email.setString("Email");
         t_password.setString("Password");
         t_newsheader.setString("News feed");
-        t_news.setString(wrap_text("8 more days to the first Alpha Demo release.\n\nWe are having some troubles with getting done exactly everything we planned for the first V4 release, so please keep in mind that the game will be constantly updated and the screen you're looking at belongs to the Patafour Launcher, which will make sure to keep you up to date with all new updates and features.\n\nThanks for reading!", 420, p4kaku, 18));
+        t_news.setString(wrap_text("Only 2 days left to the first Alpha Demo release.\n\nWe are having some troubles with getting done exactly everything we planned for the first V4 release, so please keep in mind that the game will be constantly updated and the screen you're looking at belongs to the Patafour Launcher, which will make sure to keep you up to date with all new updates and features.\n\nThanks for reading!", 420, p4kaku, 18));
         t_login.setString("Log in");
         t_create.setString("Create new account");
         t_playoffline.setString("Play offline");
@@ -432,6 +449,59 @@ Earthend::Earthend()
         t_create.setOrigin(t_create.getGlobalBounds().width/2,t_create.getGlobalBounds().height/2);
         t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
         t_version.setOrigin(t_version.getGlobalBounds().width/2,t_version.getGlobalBounds().height/2);
+
+        ///more launcher crap
+        t_checkingupdates.setFont(p4kaku);
+        t_updatefound1.setFont(p4kaku);
+        t_updatefound2.setFont(p4kaku);
+        t_updating.setFont(p4kaku);
+        t_updating_per.setFont(p4kaku);
+        t_updating_file.setFont(p4kaku);
+        t_onlinewarning.setFont(p4kaku);
+        t_noconnection1.setFont(p4kaku);
+        t_noconnection2.setFont(p4kaku);
+        t_tryagain.setFont(p4kaku);
+        t_yes.setFont(p4kaku);
+        t_no.setFont(p4kaku);
+
+        t_checkingupdates.setFillColor(sf::Color::White);
+        t_updatefound1.setFillColor(sf::Color::White);
+        t_updatefound2.setFillColor(sf::Color::White);
+        t_updating.setFillColor(sf::Color::White);
+        t_updating_per.setFillColor(sf::Color::White);
+        t_updating_file.setFillColor(sf::Color::White);
+        t_onlinewarning.setFillColor(sf::Color::White);
+        t_noconnection1.setFillColor(sf::Color::White);
+        t_noconnection2.setFillColor(sf::Color::White);
+        t_tryagain.setFillColor(sf::Color::White);
+        t_yes.setFillColor(sf::Color::White);
+        t_no.setFillColor(sf::Color::White);
+
+        t_checkingupdates.setCharacterSize(30);
+        t_updatefound1.setCharacterSize(30);
+        t_updatefound2.setCharacterSize(30);
+        t_updating.setCharacterSize(30);
+        t_updating_per.setCharacterSize(30);
+        t_updating_file.setCharacterSize(30);
+        t_onlinewarning.setCharacterSize(30);
+        t_noconnection1.setCharacterSize(30);
+        t_noconnection2.setCharacterSize(30);
+        t_tryagain.setCharacterSize(30);
+        t_yes.setCharacterSize(30);
+        t_no.setCharacterSize(30);
+
+        t_checkingupdates.setString("Checking for updates...");
+        t_updatefound1.setString("New update has been found!");
+        t_updatefound2.setString("Update the game now?");
+        t_updating.setString("Updating the game...");
+        t_updating_per.setString("");
+        t_updating_file.setString("");
+        t_onlinewarning.setString("Online features will be disabled when running outdated\nversion of the game. Proceed anyway?");
+        t_noconnection1.setString("Could not connect to the Patafour update server.");
+        t_noconnection2.setString("Check your internet connection and try again.");
+        t_tryagain.setString("Try again");
+        t_yes.setString("Yes");
+        t_no.setString("No");
     }
 }
 
@@ -441,13 +511,7 @@ bool Earthend::file_exists(string file)
     return (stat(file.c_str(), &buffer) == 0);
 }
 
-void Earthend::getWebFileList()
-{
-    web_file_list = download.dl_str("dl.patafourgame.com","/sample.txt");
-    cout << web_file_list << endl;
-}
-
-void Earthend::getLocalFileList(const char* dirn)
+/**void Earthend::getLocalFileList(const char* dirn)
 {
     char dirnPath[1024];
     sprintf(dirnPath, "%s\\*", dirn);
@@ -482,7 +546,7 @@ void Earthend::getLocalFileList(const char* dirn)
 
     } while (FindNextFile(h, &f));
     FindClose(h);
-}
+}*/
 
 string Earthend::getFileHash(string filename)
 {
@@ -512,110 +576,6 @@ vector<string> Earthend::split(const std::string &s, char delim)
 	}
 
 	return elems;
-}
-
-void Earthend::splitWebFileList()
-{
-    vector<string> files = split(web_file_list,';');
-
-    for(int i=0; i<files.size(); i++)
-    {
-        vector<string> file_segments = split(files[i],',');
-
-        cout << "Web location of file: " << file_segments[0] << endl;
-        cout << "File hash: " << file_segments[1] << endl;
-        cout << "File size: " << file_segments[2] << endl;
-
-        web_files.push_back(file_segments[0]);
-        web_hashes.push_back(file_segments[1]);
-        web_sizes.push_back(file_segments[2]);
-    }
-}
-
-void Earthend::verifyFiles()
-{
-    for(int i=0; i<web_files.size(); i++)
-    {
-        string filename = web_files[i].substr(web_files[i].find_first_of("/")+1);
-
-        string web_hash = web_hashes[i];
-        string web_size = web_sizes[i];
-
-        ifstream local(filename);
-        bool exists = local.good();
-
-        ///if file exists - check it's hash if it needs to be updated
-        ///if file doesn't exist, add it to download queue
-
-        if(exists == true)
-        {
-            ///check hash and size
-            string local_hash = getFileHash(filename);
-
-            ///if hashes are the same, nothing needs to be updated
-            ///if hashes are different, add the file to download queue because it needs to be updated
-            if(web_hash != local_hash)
-            {
-                files_download.push_back(web_files[i]);
-            }
-        }
-        else
-        {
-            ///add to queue
-            files_download.push_back(web_files[i]);
-        }
-    }
-
-    ///determine all files that needs to be removed
-    for(int i=0; i<local_files.size(); i++)
-    {
-        bool exists = false;
-
-        string local_filename = local_files[i].substr(local_files[i].find_first_of("\\")+1);
-
-        for(int a=0; a<local_filename.size(); a++)
-        {
-            if(local_filename[a] == '\\')
-            {
-                local_filename[a] = '/';
-            }
-        }
-
-        for(int i2=0; i2<web_files.size(); i2++)
-        {
-            string filename = web_files[i2].substr(web_files[i2].find_first_of("/")+1);
-
-            if(local_filename == filename)
-            {
-                exists = true;
-            }
-        }
-
-        if(exists == false)
-        {
-            files_remove.push_back(local_files[i]);
-        }
-    }
-
-
-    cout << "Files to be downloaded:" << endl;
-
-    for(int i=0; i<files_download.size(); i++)
-    {
-        cout << files_download[i] << endl;
-    }
-
-    cout << "Files to be removed: " << endl;
-
-    for(int i=0; i<files_remove.size(); i++)
-    {
-        cout << files_remove[i] << endl;
-    }
-}
-
-void Earthend::downloadFile()
-{
-
 }
 
 void Earthend::FirstRunDownload()
@@ -661,6 +621,11 @@ void Earthend::FirstRunDownload()
                 if(file.find("START_DIR:") != std::string::npos)
                 {
                     start_dir = file.substr(file.find_first_of(":")+1);
+                }
+                else if(file.find("TOTAL_SIZE:") != std::string::npos)
+                {
+                    string str_total = file.substr(file.find_first_of(":")+1);
+                    total_size = atoi(str_total.c_str());
                 }
                 else
                 {
@@ -715,11 +680,11 @@ void Earthend::FirstRunDownload()
                     ///check the hashes
                     if(cur_hash == web_hash[i])
                     {
-                        cout << " verified" << endl;
+                        cout << " verified!" << endl;
                     }
                     else
                     {
-                        cout << " incorrect. Redownload file" << endl;
+                        cout << " incorrect. Error! Redownload file." << endl;
                         i--;
                     }
                 }
@@ -761,6 +726,70 @@ void Earthend::FirstRunDownload()
             }
         }
     }
+}
+
+void Earthend::CheckForUpdates()
+{
+    ///Check updater first
+    string updater_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=earthend");
+
+    if(updater_version != launcher_ver)
+    {
+        if(updater_version != "")
+        {
+            cout << "Launcher needs updating. Force update" << endl;
+            state = 4;
+        }
+        else
+        {
+            cout << "No internet connection!" << endl;
+            state = 9;
+        }
+    }
+    else
+    {
+        cout << "Launcher is up to date!" << endl;
+
+        ///Check if game exists
+        struct stat info;
+        if(stat("game", &info) != 0)
+        {
+            cout << "No game folder to be found, install the game fresh" << endl;
+            state = 7;
+        }
+        else
+        {
+            cout << "Game folder found! Compare versions (check md5 of V4Hero.exe)" << endl;
+
+            string loc_hash = getFileHash("game\\V4Hero.exe");
+            string hero_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=hero");
+            string web_hash = download.dl_str_post("dl.patafourgame.com","/gethash.php","product_id=hero&product_ver="+hero_version+"&product_file=V4Hero.exe");
+
+            if(loc_hash == web_hash)
+            {
+                cout << "Game is up to date, continue" << endl;
+                state = 10;
+            }
+            else
+            {
+                if(web_hash != "")
+                {
+                    cout << "Game is outdated. Ask for updating." << endl;
+                    state = 5;
+                }
+                else
+                {
+                    cout << "No internet connection!" << endl;
+                    state = 9;
+                }
+            }
+        }
+    }
+}
+
+void Earthend::UpdateProduct(string productID)
+{
+
 }
 
 void Earthend::Init(sf::RenderWindow& window)
@@ -1004,6 +1033,8 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 2:
         {
+            tlaunched = false;
+
             window.clear(sf::Color(64,64,64));
 
             FR_tx_finished.setOrigin(FR_tx_finished.getGlobalBounds().width/2,FR_tx_finished.getGlobalBounds().height/2);
@@ -1074,7 +1105,106 @@ void Earthend::Init(sf::RenderWindow& window)
             break;
         }
 
-        case 3: ///Login screen
+        case 3: ///Checking for updates
+        {
+            if(!tlaunched)
+            {
+                downloadThread = std::thread(Earthend::CheckForUpdates,this);
+                tlaunched = true;
+            }
+
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_checkingupdates.setString("Checking for updates...");
+
+            t_checkingupdates.setOrigin(t_checkingupdates.getGlobalBounds().width/2,t_checkingupdates.getGlobalBounds().height/2);
+            t_checkingupdates.setPosition(window.getSize().x/2,window.getSize().y/2-20);
+
+            pon1.setPosition(window.getSize().x/2 - t_checkingupdates.getGlobalBounds().width/2 - 40,window.getSize().y/2-26);
+            eye1.setPosition(window.getSize().x/2 - t_checkingupdates.getGlobalBounds().width/2 - 40,window.getSize().y/2-12);
+
+            pon2.setPosition(window.getSize().x/2 + t_checkingupdates.getGlobalBounds().width/2 + 40,window.getSize().y/2-26);
+            eye2.setPosition(window.getSize().x/2 + t_checkingupdates.getGlobalBounds().width/2 + 40,window.getSize().y/2-12);
+
+            eye1.rotate(1);
+            eye2.setRotation(eye1.getRotation() * (-1) + 90);
+
+            window.draw(t_checkingupdates);
+            window.draw(pon1);
+            window.draw(eye1);
+            window.draw(pon2);
+            window.draw(eye2);
+
+            window.setView(temp);
+
+            break;
+
+        }
+
+        case 4: ///Updating the launcher
+        {
+            if(!t2launched)
+            {
+                downloadThread = std::thread(Earthend::UpdateProduct,this);
+                t2launched = true;
+            }
+
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_updating.setString("Checking for updates...");
+
+            t_updating.setOrigin(t_updating.getGlobalBounds().width/2,t_updating.getGlobalBounds().height/2);
+            t_updating.setPosition(window.getSize().x/2,window.getSize().y/2-20);
+
+            pon1.setPosition(window.getSize().x/2 - t_updating.getGlobalBounds().width/2 - 40,window.getSize().y/2-26);
+            eye1.setPosition(window.getSize().x/2 - t_updating.getGlobalBounds().width/2 - 40,window.getSize().y/2-12);
+
+            pon2.setPosition(window.getSize().x/2 + t_updating.getGlobalBounds().width/2 + 40,window.getSize().y/2-26);
+            eye2.setPosition(window.getSize().x/2 + t_updating.getGlobalBounds().width/2 + 40,window.getSize().y/2-12);
+
+            eye1.rotate(1);
+            eye2.setRotation(eye1.getRotation() * (-1) + 90);
+
+            window.draw(t_checkingupdates);
+            window.draw(pon1);
+            window.draw(eye1);
+            window.draw(pon2);
+            window.draw(eye2);
+
+            window.setView(temp);
+
+            break;
+        }
+
+        case 5: ///Update found
         {
             ///updater code
             camera.Work(window,fps);
@@ -1082,7 +1212,80 @@ void Earthend::Init(sf::RenderWindow& window)
             test_bg.Draw(window);
 
             a_baby.fps = fps;
-            a_baby.x += 0.1;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            break;
+        }
+
+        case 6: ///Online warning
+        {
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            break;
+
+        }
+
+        case 7: ///Updating game
+        {
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            break;
+
+        }
+
+        case 8: ///Game updated
+        {
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            break;
+
+        }
+
+        case 9: ///Connection error
+        {
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            break;
+        }
+
+        case 10: ///Login screen
+        {
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
 
             /// user interface
