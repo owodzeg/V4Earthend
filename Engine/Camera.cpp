@@ -30,69 +30,6 @@ void Camera::Work(sf::RenderWindow& window,float fps)
     dest_zoom = 1;
     manual_x_dest = 0;
 
-    /** Debug controls **/
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::O))
-    {
-        if(fps >= 120)
-        dest_zoom = 1.01 - (0.01 / (fps / float(60)));
-        else
-        dest_zoom = 1.01;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-    {
-        if(fps >= 120)
-        dest_zoom = 0.99 + (0.01 / (fps / float(60)));
-        else
-        dest_zoom = 0.99;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::K))
-    {
-        camera_x -= 5;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::L))
-    {
-        camera_x += 5;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-    {
-        manual_x_dest = -500;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-    {
-        manual_x_dest = 500;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num4))
-    {
-        debug_x_dest -= 1;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num6))
-    {
-        debug_x_dest += 1;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num5))
-    {
-        debug_x_dest = 0;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num9))
-    {
-        debug_x_speed -= 10;
-    }
-
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num0))
-    {
-        debug_x_speed += 10;
-    }
-
     if(debug_x_speed < 10)
     debug_x_speed = 10;
 
