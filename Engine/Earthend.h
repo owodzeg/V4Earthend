@@ -128,7 +128,7 @@ class Earthend
     vector<string> split(const std::string &s, char delim);
     void FirstRunDownload();
     void CheckForUpdates();
-    void UpdateProduct(string productID);
+    void UpdateProduct(string productID, string directory);
 
     void Init(sf::RenderWindow& window);
     ~Earthend();

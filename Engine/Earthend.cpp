@@ -185,6 +185,11 @@ std::string BrowseFolder(std::string saved_path)
 
 Earthend::Earthend()
 {
+    if(file_exists("Patafour.exe.tmp"))
+    {
+        system("del /f Patafour.exe.tmp");
+    }
+
     srand(time(NULL));
     int baby = rand() % 8 + 1;
 
@@ -193,7 +198,7 @@ Earthend::Earthend()
     {
         cout << "No resources folder to be found, enable firstrun" << endl;
         fr = true;
-        state = 0;
+        state = 7;
     }
     else
     {
@@ -633,9 +638,11 @@ void Earthend::FirstRunDownload()
                     vector<string> f_params = split(file,',');
 
                     string fname = f_params[0];
+                    cout << "web_file: " << fname << endl;
 
                     web_file.push_back(fname);
                     fname = fname.substr(fname.find(start_dir) + start_dir.size());
+                    cout << "loc_file: " << fname << endl;
                     loc_file.push_back(fname);
                     web_hash.push_back(f_params[1]);
                 }
@@ -787,9 +794,140 @@ void Earthend::CheckForUpdates()
     }
 }
 
-void Earthend::UpdateProduct(string productID)
+void Earthend::UpdateProduct(string productID, string directory)
 {
+    cout << "Updating product " << productID << endl;
 
+    string version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id="+productID);
+
+    if(force_exit)
+    {
+        state = -1;
+    }
+
+    cout << "version: " << version << endl;
+
+    if((version == "") && (state != -1))
+    {
+        state = -1;
+    }
+    else
+    {
+        string f_list = download.dl_str_post("dl.patafourgame.com","/getfiles.php","product_id="+productID+"&product_ver="+version);
+        cout << "Files: " << endl << f_list << endl;
+
+        if(force_exit)
+        {
+            state = -1;
+        }
+
+        if((f_list == "") && (state != -1))
+        {
+            state = -1;
+        }
+        else
+        {
+            string file,start_dir;
+            vector<string> web_file,web_hash,loc_file;
+
+            stringstream oss(f_list);
+            while(getline(oss,file,'\n'))
+            {
+                if(file.find("START_DIR:") != std::string::npos)
+                {
+                    start_dir = file.substr(file.find_first_of(":")+1);
+                }
+                else if(file.find("TOTAL_SIZE:") != std::string::npos)
+                {
+                    string str_total = file.substr(file.find_first_of(":")+1);
+                    total_size = atoi(str_total.c_str());
+                }
+                else
+                {
+                    cout << file << endl;
+                    vector<string> f_params = split(file,',');
+
+                    string fname = f_params[0];
+                    cout << "web_file: " << fname << endl;
+
+                    web_file.push_back(fname);
+                    fname = fname.substr(fname.find(start_dir) + start_dir.size());
+                    cout << "loc_file: " << fname << endl;
+                    loc_file.push_back(fname);
+                    web_hash.push_back(f_params[1]);
+                }
+            }
+
+            for(int i=0; i<loc_file.size(); i++)
+            {
+                if(force_exit)
+                {
+                    state = -1;
+                    break;
+                }
+
+                bool shouldUpdate = true;
+
+                if(file_exists(directory+"\\"+loc_file[i]))
+                {
+                    string cur_hash = getFileHash(directory+"\\"+loc_file[i]);
+                    if(cur_hash == web_hash[i])
+                    {
+                        cout << "File already exists and doesn't need a replacement." << endl;
+                        shouldUpdate = false;
+                    }
+                    else
+                    {
+                        cout << "File has a different signature therefore it has been changed." << endl;
+                    }
+                }
+
+                if(shouldUpdate)
+                {
+                    FR_tx_status.setString("Downloading "+loc_file[i]);
+
+                    ///Updater only
+                    if(loc_file[i] == "Patafour.exe")
+                    {
+                        rename("Patafour.exe","Patafour.exe.tmp");
+                    }
+
+                    if(!download.dl_file("dl.patafourgame.com",web_file[i],directory+"\\"+loc_file[i]))
+                    {
+                        state = -1;
+                        break;
+                    }
+
+                    string cur_hash = getFileHash(directory+"\\"+loc_file[i]);
+                    cout << cur_hash << " " << web_hash[i];
+
+                    ///check the hashes
+                    if(cur_hash == web_hash[i])
+                    {
+                        cout << " verified!" << endl;
+                    }
+                    else
+                    {
+                        cout << " incorrect. Error! Redownload file." << endl;
+                        i--;
+                    }
+                }
+            }
+
+            if(state != -1)
+            {
+                if(force_exit)
+                {
+                    state = -1;
+                }
+
+                if(state != -1)
+                {
+                    ///download finished
+                }
+            }
+        }
+    }
 }
 
 void Earthend::Init(sf::RenderWindow& window)
@@ -1159,7 +1297,7 @@ void Earthend::Init(sf::RenderWindow& window)
         {
             if(!t2launched)
             {
-                downloadThread = std::thread(Earthend::UpdateProduct,this);
+                downloadThread = std::thread(Earthend::UpdateProduct,this,"earthend","");
                 t2launched = true;
             }
 
@@ -1235,6 +1373,13 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 7: ///Updating game
         {
+            if(!t2launched)
+            {
+                _mkdir("game");
+                downloadThread = std::thread(Earthend::UpdateProduct,this,"hero","game");
+                t2launched = true;
+            }
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
