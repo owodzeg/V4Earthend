@@ -9,6 +9,16 @@
 
 using namespace std;
 
+///helper func
+template <typename T>
+std::string to_string_with_precision(const T a_value, const int n = 2)
+{
+    std::ostringstream out;
+    out.precision(n);
+    out << std::fixed << a_value;
+    return out.str();
+}
+
 string wrap_text(string input, int box_width, sf::Font font, int character_size)
 {
     cout << "wrap_text(" << input << ", " << box_width << ")" << endl;
@@ -198,7 +208,7 @@ Earthend::Earthend()
     {
         cout << "No resources folder to be found, enable firstrun" << endl;
         fr = true;
-        state = 7;
+        state = 0;
     }
     else
     {
@@ -414,6 +424,7 @@ Earthend::Earthend()
         t_create.setFont(p4kaku);
         t_playoffline.setFont(p4kaku);
         t_version.setFont(p4kaku);
+        t_error.setFont(p4kaku);
 
         t_username.setFillColor(sf::Color::White);
         t_email.setFillColor(sf::Color::White);
@@ -424,16 +435,18 @@ Earthend::Earthend()
         t_create.setFillColor(sf::Color::White);
         t_playoffline.setFillColor(sf::Color::White);
         t_version.setFillColor(sf::Color(255,255,255,128));
+        t_error.setFillColor(sf::Color(255,0,0,164));
 
         t_username.setString("Username");
         t_email.setString("Email");
         t_password.setString("Password");
         t_newsheader.setString("News feed");
-        t_news.setString(wrap_text("Only 2 days left to the first Alpha Demo release.\n\nWe are having some troubles with getting done exactly everything we planned for the first V4 release, so please keep in mind that the game will be constantly updated and the screen you're looking at belongs to the Patafour Launcher, which will make sure to keep you up to date with all new updates and features.\n\nThanks for reading!", 420, p4kaku, 18));
+        t_news.setString(wrap_text("ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ", 420, p4kaku, 18));
         t_login.setString("Log in");
         t_create.setString("Create new account");
         t_playoffline.setString("Play offline");
-        t_version.setString("build V4Hero-1.0.0");
+        t_version.setString("build V4Earthend-"+launcher_ver);
+        t_error.setString("Login and Register are not finished yet.");
 
         t_username.setCharacterSize(24);
         t_email.setCharacterSize(24);
@@ -444,6 +457,7 @@ Earthend::Earthend()
         t_create.setCharacterSize(24);
         t_playoffline.setCharacterSize(24);
         t_version.setCharacterSize(24);
+        t_error.setCharacterSize(14);
 
         t_username.setOrigin(t_username.getGlobalBounds().width,t_username.getGlobalBounds().height/2);
         t_email.setOrigin(t_email.getGlobalBounds().width,t_email.getGlobalBounds().height/2);
@@ -454,6 +468,7 @@ Earthend::Earthend()
         t_create.setOrigin(t_create.getGlobalBounds().width/2,t_create.getGlobalBounds().height/2);
         t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
         t_version.setOrigin(t_version.getGlobalBounds().width/2,t_version.getGlobalBounds().height/2);
+        t_error.setOrigin(0,t_error.getGlobalBounds().height/2);
 
         ///more launcher crap
         t_checkingupdates.setFont(p4kaku);
@@ -468,6 +483,8 @@ Earthend::Earthend()
         t_tryagain.setFont(p4kaku);
         t_yes.setFont(p4kaku);
         t_no.setFont(p4kaku);
+        t_finished.setFont(p4kaku);
+        t_understood.setFont(p4kaku);
 
         t_checkingupdates.setFillColor(sf::Color::White);
         t_updatefound1.setFillColor(sf::Color::White);
@@ -481,6 +498,8 @@ Earthend::Earthend()
         t_tryagain.setFillColor(sf::Color::White);
         t_yes.setFillColor(sf::Color::White);
         t_no.setFillColor(sf::Color::White);
+        t_finished.setFillColor(sf::Color::White);
+        t_understood.setFillColor(sf::Color::White);
 
         t_checkingupdates.setCharacterSize(30);
         t_updatefound1.setCharacterSize(30);
@@ -494,6 +513,8 @@ Earthend::Earthend()
         t_tryagain.setCharacterSize(30);
         t_yes.setCharacterSize(30);
         t_no.setCharacterSize(30);
+        t_finished.setCharacterSize(30);
+        t_understood.setCharacterSize(30);
 
         t_checkingupdates.setString("Checking for updates...");
         t_updatefound1.setString("New update has been found!");
@@ -507,6 +528,8 @@ Earthend::Earthend()
         t_tryagain.setString("Try again");
         t_yes.setString("Yes");
         t_no.setString("No");
+        t_finished.setString("Game has been successfully updated!");
+        t_understood.setString("Understood");
     }
 }
 
@@ -772,6 +795,9 @@ void Earthend::CheckForUpdates()
             string hero_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=hero");
             string web_hash = download.dl_str_post("dl.patafourgame.com","/gethash.php","product_id=hero&product_ver="+hero_version+"&product_file=V4Hero.exe");
 
+            cout << "loc_hash: " << loc_hash << endl;
+            cout << "web_hash: " << web_hash << endl;
+
             if(loc_hash == web_hash)
             {
                 cout << "Game is up to date, continue" << endl;
@@ -828,7 +854,7 @@ void Earthend::UpdateProduct(string productID, string directory)
         else
         {
             string file,start_dir;
-            vector<string> web_file,web_hash,loc_file;
+            vector<string> web_file,web_hash,web_sizes,loc_file;
 
             stringstream oss(f_list);
             while(getline(oss,file,'\n'))
@@ -841,6 +867,7 @@ void Earthend::UpdateProduct(string productID, string directory)
                 {
                     string str_total = file.substr(file.find_first_of(":")+1);
                     total_size = atoi(str_total.c_str());
+                    max_downloaded = total_size;
                 }
                 else
                 {
@@ -855,6 +882,7 @@ void Earthend::UpdateProduct(string productID, string directory)
                     cout << "loc_file: " << fname << endl;
                     loc_file.push_back(fname);
                     web_hash.push_back(f_params[1]);
+                    web_sizes.push_back(f_params[2]);
                 }
             }
 
@@ -868,13 +896,23 @@ void Earthend::UpdateProduct(string productID, string directory)
 
                 bool shouldUpdate = true;
 
-                if(file_exists(directory+"\\"+loc_file[i]))
+                string realdir = directory+"/"+loc_file[i];
+                if(productID == "earthend")
+                realdir = loc_file[i];
+
+                cout << "Check for file " << realdir << endl;
+
+                if(file_exists(realdir))
                 {
-                    string cur_hash = getFileHash(directory+"\\"+loc_file[i]);
+                    string cur_hash = getFileHash(realdir);
+                    cout << "cur_hash: " << cur_hash << " web_hash: " << web_hash[i] << endl;
                     if(cur_hash == web_hash[i])
                     {
                         cout << "File already exists and doesn't need a replacement." << endl;
+                        cur_downloaded += atoi(web_sizes[i].c_str());
+                        cur_percentage = float(cur_downloaded) / float(max_downloaded) * float(100);
                         shouldUpdate = false;
+                        t_updating_file.setString("downloading "+loc_file[i]);
                     }
                     else
                     {
@@ -884,27 +922,30 @@ void Earthend::UpdateProduct(string productID, string directory)
 
                 if(shouldUpdate)
                 {
-                    FR_tx_status.setString("Downloading "+loc_file[i]);
-
                     ///Updater only
                     if(loc_file[i] == "Patafour.exe")
                     {
                         rename("Patafour.exe","Patafour.exe.tmp");
                     }
 
-                    if(!download.dl_file("dl.patafourgame.com",web_file[i],directory+"\\"+loc_file[i]))
+                    t_updating_file.setString("downloading "+loc_file[i]);
+
+                    if(!download.dl_file("dl.patafourgame.com",web_file[i],realdir))
                     {
                         state = -1;
                         break;
                     }
 
-                    string cur_hash = getFileHash(directory+"\\"+loc_file[i]);
-                    cout << cur_hash << " " << web_hash[i];
+                    string cur_hash = getFileHash(realdir);
+
+                    cout << cur_hash << " " << web_hash[i] << " " << directory+"\\"+loc_file[i];
 
                     ///check the hashes
                     if(cur_hash == web_hash[i])
                     {
                         cout << " verified!" << endl;
+                        cur_downloaded += atoi(web_sizes[i].c_str());
+                        cur_percentage = float(cur_downloaded) / float(max_downloaded) * float(100);
                     }
                     else
                     {
@@ -924,6 +965,14 @@ void Earthend::UpdateProduct(string productID, string directory)
                 if(state != -1)
                 {
                     ///download finished
+                    if(productID == "earthend")
+                    {
+                        selfupdate = true;
+                    }
+                    else
+                    {
+                        state = 8;
+                    }
                 }
             }
         }
@@ -1245,9 +1294,11 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 3: ///Checking for updates
         {
+            window.clear(sf::Color(0,0,0));
+
             if(!tlaunched)
             {
-                downloadThread = std::thread(Earthend::CheckForUpdates,this);
+                checkupdateThread = std::thread(Earthend::CheckForUpdates,this);
                 tlaunched = true;
             }
 
@@ -1295,6 +1346,8 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 4: ///Updating the launcher
         {
+            window.clear(sf::Color(0,0,0));
+
             if(!t2launched)
             {
                 downloadThread = std::thread(Earthend::UpdateProduct,this,"earthend","");
@@ -1317,21 +1370,35 @@ void Earthend::Init(sf::RenderWindow& window)
 
             window.draw(rect_1);
 
-            t_updating.setString("Checking for updates...");
+            t_updating.setString("Updating Patafour Launcher...");
 
             t_updating.setOrigin(t_updating.getGlobalBounds().width/2,t_updating.getGlobalBounds().height/2);
-            t_updating.setPosition(window.getSize().x/2,window.getSize().y/2-20);
+            t_updating.setPosition(window.getSize().x/2,window.getSize().y/2-40);
 
-            pon1.setPosition(window.getSize().x/2 - t_updating.getGlobalBounds().width/2 - 40,window.getSize().y/2-26);
-            eye1.setPosition(window.getSize().x/2 - t_updating.getGlobalBounds().width/2 - 40,window.getSize().y/2-12);
+            t_updating_file.setCharacterSize(18);
 
-            pon2.setPosition(window.getSize().x/2 + t_updating.getGlobalBounds().width/2 + 40,window.getSize().y/2-26);
-            eye2.setPosition(window.getSize().x/2 + t_updating.getGlobalBounds().width/2 + 40,window.getSize().y/2-12);
+            t_updating_per.setCharacterSize(16 + (24*cur_percentage/100));
+            t_updating_per.setString(to_string_with_precision(cur_percentage,2)+"%");
+
+            t_updating_per.setOrigin(t_updating_per.getGlobalBounds().width/2,t_updating_per.getGlobalBounds().height/2);
+            t_updating_file.setOrigin(t_updating_file.getGlobalBounds().width/2,t_updating_file.getGlobalBounds().height/2);
+
+            t_updating_per.setPosition(window.getSize().x/2,window.getSize().y/2+30);
+
+            pon1.setPosition(window.getSize().x/2 - t_updating_per.getGlobalBounds().width/2 - 40,window.getSize().y/2+26);
+            eye1.setPosition(window.getSize().x/2 - t_updating_per.getGlobalBounds().width/2 - 40,window.getSize().y/2+40);
+
+            pon2.setPosition(window.getSize().x/2 + t_updating_per.getGlobalBounds().width/2 + 40,window.getSize().y/2+26);
+            eye2.setPosition(window.getSize().x/2 + t_updating_per.getGlobalBounds().width/2 + 40,window.getSize().y/2+40);
 
             eye1.rotate(1);
             eye2.setRotation(eye1.getRotation() * (-1) + 90);
 
-            window.draw(t_checkingupdates);
+            t_updating_file.setPosition(window.getSize().x/2,window.getSize().y-20);
+
+            window.draw(t_updating);
+            window.draw(t_updating_per);
+            window.draw(t_updating_file);
             window.draw(pon1);
             window.draw(eye1);
             window.draw(pon2);
@@ -1344,6 +1411,8 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 5: ///Update found
         {
+            window.clear(sf::Color(0,0,0));
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
@@ -1352,12 +1421,89 @@ void Earthend::Init(sf::RenderWindow& window)
             a_baby.fps = fps;
             a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
+
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_updatefound1.setString("New update has been found!");
+            t_updatefound2.setString("Update the game now?");
+            t_yes.setString("Yes");
+            t_no.setString("No");
+
+            t_updatefound1.setOrigin(t_updatefound1.getGlobalBounds().width/2,t_updatefound1.getGlobalBounds().height/2);
+            t_updatefound1.setPosition(window.getSize().x/2,window.getSize().y/2-100);
+
+            t_updatefound2.setOrigin(t_updatefound2.getGlobalBounds().width/2,t_updatefound2.getGlobalBounds().height/2);
+            t_updatefound2.setPosition(window.getSize().x/2,window.getSize().y/2-60);
+
+            t_yes.setOrigin(t_yes.getGlobalBounds().width/2,t_yes.getGlobalBounds().height/2);
+            t_yes.setPosition(window.getSize().x/2,window.getSize().y/2);
+
+            t_no.setOrigin(t_no.getGlobalBounds().width/2,t_no.getGlobalBounds().height/2);
+            t_no.setPosition(window.getSize().x/2,window.getSize().y/2+36);
+
+            t_yes.setFillColor(sf::Color::White);
+
+            if(mouseX > t_yes.getPosition().x-t_yes.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_yes.getPosition().x+t_yes.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_yes.getPosition().y-t_yes.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_yes.getPosition().y+t_yes.getGlobalBounds().height/2)
+                        {
+                            t_yes.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 7;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            t_no.setFillColor(sf::Color::White);
+
+            if(mouseX > t_no.getPosition().x-t_no.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_no.getPosition().x+t_no.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_no.getPosition().y-t_no.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_no.getPosition().y+t_no.getGlobalBounds().height/2)
+                        {
+                            t_no.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 6;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(t_updatefound1);
+            window.draw(t_updatefound2);
+            window.draw(t_yes);
+            window.draw(t_no);
+
+            window.setView(temp);
 
             break;
         }
 
         case 6: ///Online warning
         {
+            window.clear(sf::Color(0,0,0));
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
@@ -1367,12 +1513,83 @@ void Earthend::Init(sf::RenderWindow& window)
             a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
 
-            break;
+            sf::View temp;
+            temp = window.getView();
 
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_onlinewarning.setString("Online features will be disabled when running\noutdated version of the game. Proceed anyway?");
+            t_yes.setString("Yes");
+            t_no.setString("No");
+
+            t_onlinewarning.setOrigin(t_onlinewarning.getGlobalBounds().width/2,t_onlinewarning.getGlobalBounds().height/2);
+            t_onlinewarning.setPosition(window.getSize().x/2,window.getSize().y/2-84);
+
+            t_yes.setOrigin(t_yes.getGlobalBounds().width/2,t_yes.getGlobalBounds().height/2);
+            t_yes.setPosition(window.getSize().x/2,window.getSize().y/2);
+
+            t_no.setOrigin(t_no.getGlobalBounds().width/2,t_no.getGlobalBounds().height/2);
+            t_no.setPosition(window.getSize().x/2,window.getSize().y/2+36);
+
+            t_yes.setFillColor(sf::Color::White);
+
+            if(mouseX > t_yes.getPosition().x-t_yes.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_yes.getPosition().x+t_yes.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_yes.getPosition().y-t_yes.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_yes.getPosition().y+t_yes.getGlobalBounds().height/2)
+                        {
+                            t_yes.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 10;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            t_no.setFillColor(sf::Color::White);
+
+            if(mouseX > t_no.getPosition().x-t_no.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_no.getPosition().x+t_no.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_no.getPosition().y-t_no.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_no.getPosition().y+t_no.getGlobalBounds().height/2)
+                        {
+                            t_no.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 5;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(t_onlinewarning);
+            window.draw(t_yes);
+            window.draw(t_no);
+
+            window.setView(temp);
+
+            break;
         }
 
         case 7: ///Updating game
         {
+            window.clear(sf::Color(0,0,0));
+
             if(!t2launched)
             {
                 _mkdir("game");
@@ -1389,12 +1606,56 @@ void Earthend::Init(sf::RenderWindow& window)
             a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
 
-            break;
+            sf::View temp;
+            temp = window.getView();
 
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_updating.setString("Updating Patafour...");
+
+            t_updating.setOrigin(t_updating.getGlobalBounds().width/2,t_updating.getGlobalBounds().height/2);
+            t_updating.setPosition(window.getSize().x/2,window.getSize().y/2-40);
+
+            t_updating_file.setCharacterSize(18);
+
+            t_updating_per.setCharacterSize(16 + (24*cur_percentage/100));
+            t_updating_per.setString(to_string_with_precision(cur_percentage,2)+"%");
+
+            t_updating_per.setOrigin(t_updating_per.getGlobalBounds().width/2,t_updating_per.getGlobalBounds().height/2);
+            t_updating_file.setOrigin(t_updating_file.getGlobalBounds().width/2,t_updating_file.getGlobalBounds().height/2);
+
+            t_updating_per.setPosition(window.getSize().x/2,window.getSize().y/2+30);
+
+            pon1.setPosition(window.getSize().x/2 - t_updating_per.getGlobalBounds().width/2 - 40,window.getSize().y/2+26);
+            eye1.setPosition(window.getSize().x/2 - t_updating_per.getGlobalBounds().width/2 - 40,window.getSize().y/2+40);
+
+            pon2.setPosition(window.getSize().x/2 + t_updating_per.getGlobalBounds().width/2 + 40,window.getSize().y/2+26);
+            eye2.setPosition(window.getSize().x/2 + t_updating_per.getGlobalBounds().width/2 + 40,window.getSize().y/2+40);
+
+            eye1.rotate(1);
+            eye2.setRotation(eye1.getRotation() * (-1) + 90);
+
+            t_updating_file.setPosition(window.getSize().x/2,window.getSize().y-20);
+
+            window.draw(t_updating);
+            window.draw(t_updating_per);
+            window.draw(t_updating_file);
+            window.draw(pon1);
+            window.draw(eye1);
+            window.draw(pon2);
+            window.draw(eye2);
+
+            window.setView(temp);
+
+            break;
         }
 
         case 8: ///Game updated
         {
+            window.clear(sf::Color(0,0,0));
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
@@ -1404,12 +1665,57 @@ void Earthend::Init(sf::RenderWindow& window)
             a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
 
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_finished.setString("Game has been successfully updated!");
+            t_understood.setString("Understood");
+
+            t_finished.setOrigin(t_finished.getGlobalBounds().width/2,t_finished.getGlobalBounds().height/2);
+            t_finished.setPosition(window.getSize().x/2,window.getSize().y/2-60);
+
+            t_understood.setOrigin(t_understood.getGlobalBounds().width/2,t_understood.getGlobalBounds().height/2);
+            t_understood.setPosition(window.getSize().x/2,window.getSize().y/2);
+
+            t_understood.setFillColor(sf::Color::White);
+
+            if(mouseX > t_understood.getPosition().x-t_understood.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_understood.getPosition().x+t_understood.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_understood.getPosition().y-t_understood.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_understood.getPosition().y+t_understood.getGlobalBounds().height/2)
+                        {
+                            t_understood.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 10;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(t_finished);
+            window.draw(t_understood);
+
+            window.setView(temp);
+
             break;
 
         }
 
         case 9: ///Connection error
         {
+            window.clear(sf::Color(0,0,0));
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
@@ -1424,6 +1730,8 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 10: ///Login screen
         {
+            window.clear(sf::Color(0,0,0));
+
             ///updater code
             camera.Work(window,fps);
             test_bg.setCamera(camera);
@@ -1463,6 +1771,31 @@ void Earthend::Init(sf::RenderWindow& window)
             t_create.setPosition(400,422);
             t_playoffline.setPosition(400,458);
 
+            t_login.setColor(sf::Color(192,192,192,255));
+            t_create.setColor(sf::Color(192,192,192,255));
+
+            t_playoffline.setFillColor(sf::Color::White);
+
+            if(mouseX > t_playoffline.getPosition().x-t_playoffline.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_playoffline.getPosition().x+t_playoffline.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_playoffline.getPosition().y-t_playoffline.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_playoffline.getPosition().y+t_playoffline.getGlobalBounds().height/2)
+                        {
+                            t_playoffline.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                runhero = true;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
             window.draw(t_login);
             window.draw(t_create);
             window.draw(t_playoffline);
@@ -1472,6 +1805,9 @@ void Earthend::Init(sf::RenderWindow& window)
 
             window.draw(t_newsheader);
             window.draw(t_news);
+
+            t_error.setPosition(s_loginbox.getPosition().x-(s_loginbox.getGlobalBounds().width/2)+8,s_loginbox.getPosition().y-44);
+            window.draw(t_error);
 
             window.setView(temp);
 
@@ -1486,4 +1822,12 @@ Earthend::~Earthend()
 
     if(downloadThread.joinable())
     downloadThread.join();
+
+    if(checkupdateThread.joinable())
+    checkupdateThread.join();
+
+    if(!file_exists("Patafour.exe"))
+    {
+        rename("Patafour.exe.tmp","Patafour.exe");
+    }
 }

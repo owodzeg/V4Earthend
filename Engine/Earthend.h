@@ -20,7 +20,7 @@ using namespace std;
 class Earthend
 {
     public:
-    string launcher_ver = "v1.0.0";
+    string launcher_ver = "v1.0.8";
 
     Download download;
     Camera camera;
@@ -35,6 +35,7 @@ class Earthend
     bool t2launched = false;
     bool force_exit = false;
 
+    thread checkupdateThread;
     thread downloadThread;
     sf::Clock restart_clock;
     sf::Clock timeout_clock;
@@ -76,6 +77,8 @@ class Earthend
     int total_size = 0;
 
     bool exit_launcher = false;
+    bool selfupdate = false;
+    bool runhero = false;
 
     ///Regular mode
     sf::Font p4kaku;
@@ -88,6 +91,7 @@ class Earthend
     sf::Text t_newsheader,t_news;
     sf::Text t_login,t_create,t_playoffline;
     sf::Text t_version;
+    sf::Text t_error;
 
     sf::Text t_checkingupdates;
     sf::Text t_updatefound1;
@@ -98,14 +102,20 @@ class Earthend
     sf::Text t_onlinewarning;
     sf::Text t_noconnection1;
     sf::Text t_noconnection2;
+    sf::Text t_finished;
     sf::Text t_tryagain;
     sf::Text t_yes;
     sf::Text t_no;
+    sf::Text t_understood;
     sf::Sprite pon1,eye1,pon2,eye2;
     sf::Sprite s_sword;
 
     float fps;
     int state = 0;
+
+    int cur_downloaded = 0; ///current progress
+    int max_downloaded = 0; ///amount of data to download
+    float cur_percentage = 0;
 
     string web_file_list;
 
