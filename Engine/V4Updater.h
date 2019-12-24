@@ -20,6 +20,9 @@ class V4Updater
     int a = 0;
 
     public:
+    std::string working_exe;
+    std::string working_dir;
+
     int mouseX,mouseY;
     bool mouseLeftClick = false;
 

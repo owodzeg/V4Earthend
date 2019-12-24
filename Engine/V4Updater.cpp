@@ -97,6 +97,44 @@ void V4Updater::Init()
             }
         }
 
+        if(earthend.selfupdate)
+        {
+            string dir = working_exe;
+            cout << dir << endl;
+            PROCESS_INFORMATION pi;
+            STARTUPINFO si;
+
+            ZeroMemory( & pi, sizeof( pi ) );
+            ZeroMemory( & si, sizeof( si ) );
+            si.cb = sizeof( si );
+
+            if(!CreateProcess(NULL, (LPSTR)dir.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+            {
+                printf("Could not create process. (%ld)", GetLastError());
+            }
+
+            break;
+        }
+
+        if(earthend.runhero)
+        {
+            string dir = working_dir+"\\game\\V4Hero.exe";
+            cout << dir << endl;
+            PROCESS_INFORMATION pi;
+            STARTUPINFO si;
+
+            ZeroMemory( & pi, sizeof( pi ) );
+            ZeroMemory( & si, sizeof( si ) );
+            si.cb = sizeof( si );
+
+            if(!CreateProcess(NULL, (LPSTR)dir.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+            {
+                printf("Could not create process. (%ld)", GetLastError());
+            }
+
+            break;
+        }
+
         window.display();
 
         keyMap.clear();
