@@ -23,6 +23,9 @@ string wrap_text(string input, int box_width, sf::Font font, int character_size)
 {
     cout << "wrap_text(" << input << ", " << box_width << ")" << endl;
 
+    if(input.size() <= 0)
+    return "";
+
     string temp = "";
     vector<string> words;
 
@@ -212,15 +215,30 @@ Earthend::Earthend()
     }
     else
     {
-        cout << "Resources folder found! Execute the launcher" << endl;
-        state = 3;
+        if(file_exists("resources/v4_launcher"))
+        {
+            cout << "Resources folder found! Execute the launcher" << endl;
+            state = 3;
+        }
+        else
+        {
+            cout << "No resources folder to be found, enable firstrun" << endl;
+            fr = true;
+            state = 0;
+        }
     }
 
     TCHAR pf[MAX_PATH];
-    SHGetFolderPathA(NULL,CSIDL_PROGRAM_FILES,0,NULL,pf);
+    SHGetFolderPathA(NULL,CSIDL_APPDATA,0,NULL,pf);
     string program_files = string(pf)+"\\Patafour";
     _mkdir(program_files.c_str());
     cout << program_files << endl;
+
+    if(stat(program_files.c_str(), &info) != 0)
+    {
+        cout << "Could not create a folder inside Program Files (x86)" << endl;
+    }
+
     installdir = program_files;
 
     ///FIRST-RUN LOAD
@@ -441,7 +459,6 @@ Earthend::Earthend()
         t_email.setString("Email");
         t_password.setString("Password");
         t_newsheader.setString("News feed");
-        t_news.setString(wrap_text("ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ITS TODAY ", 420, p4kaku, 18));
         t_login.setString("Log in");
         t_create.setString("Create new account");
         t_playoffline.setString("Play offline");
@@ -760,60 +777,73 @@ void Earthend::FirstRunDownload()
 
 void Earthend::CheckForUpdates()
 {
-    ///Check updater first
-    string updater_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=earthend");
+    string newsHeader = download.dl_str("pastebin.com","/raw/3a6zfx2C");
 
-    if(updater_version != launcher_ver)
+    if(newsHeader == "")
     {
-        if(updater_version != "")
-        {
-            cout << "Launcher needs updating. Force update" << endl;
-            state = 4;
-        }
-        else
-        {
-            cout << "No internet connection!" << endl;
-            state = 9;
-        }
+        t_news.setString(wrap_text("No news available or you don't have connection to the internet!", 420, p4kaku, 18));
+        state = 9;
     }
     else
     {
-        cout << "Launcher is up to date!" << endl;
+        if(newsHeader != "")
+        t_news.setString(wrap_text(newsHeader, 420, p4kaku, 18));
 
-        ///Check if game exists
-        struct stat info;
-        if(stat("game", &info) != 0)
+        ///Check updater first
+        string updater_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=earthend");
+
+        if(updater_version != launcher_ver)
         {
-            cout << "No game folder to be found, install the game fresh" << endl;
-            state = 7;
-        }
-        else
-        {
-            cout << "Game folder found! Compare versions (check md5 of V4Hero.exe)" << endl;
-
-            string loc_hash = getFileHash("game\\V4Hero.exe");
-            string hero_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=hero");
-            string web_hash = download.dl_str_post("dl.patafourgame.com","/gethash.php","product_id=hero&product_ver="+hero_version+"&product_file=V4Hero.exe");
-
-            cout << "loc_hash: " << loc_hash << endl;
-            cout << "web_hash: " << web_hash << endl;
-
-            if(loc_hash == web_hash)
+            if(updater_version != "")
             {
-                cout << "Game is up to date, continue" << endl;
-                state = 10;
+                cout << "Launcher needs updating. Force update" << endl;
+                state = 4;
             }
             else
             {
-                if(web_hash != "")
+                cout << "No internet connection!" << endl;
+                state = 9;
+            }
+        }
+        else
+        {
+            cout << "Launcher is up to date!" << endl;
+
+            ///Check if game exists
+            struct stat info;
+            if(stat("game", &info) != 0)
+            {
+                cout << "No game folder to be found, install the game fresh" << endl;
+                state = 7;
+            }
+            else
+            {
+                cout << "Game folder found! Compare versions (check md5 of V4Hero.exe)" << endl;
+
+                string loc_hash = getFileHash("game\\V4Hero.exe");
+                string hero_version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id=hero");
+                string web_hash = download.dl_str_post("dl.patafourgame.com","/gethash.php","product_id=hero&product_ver="+hero_version+"&product_file=V4Hero.exe");
+
+                cout << "loc_hash: " << loc_hash << endl;
+                cout << "web_hash: " << web_hash << endl;
+
+                if(loc_hash == web_hash)
                 {
-                    cout << "Game is outdated. Ask for updating." << endl;
-                    state = 5;
+                    cout << "Game is up to date, continue" << endl;
+                    state = 10;
                 }
                 else
                 {
-                    cout << "No internet connection!" << endl;
-                    state = 9;
+                    if(web_hash != "")
+                    {
+                        cout << "Game is outdated. Ask for updating." << endl;
+                        state = 5;
+                    }
+                    else
+                    {
+                        cout << "No internet connection!" << endl;
+                        state = 9;
+                    }
                 }
             }
         }
@@ -1714,6 +1744,13 @@ void Earthend::Init(sf::RenderWindow& window)
 
         case 9: ///Connection error
         {
+            if(tlaunched)
+            {
+                tlaunched = false;
+                if(checkupdateThread.joinable())
+                checkupdateThread.join();
+            }
+
             window.clear(sf::Color(0,0,0));
 
             ///updater code
@@ -1724,6 +1761,83 @@ void Earthend::Init(sf::RenderWindow& window)
             a_baby.fps = fps;
             a_baby.x += 25 / float(fps);
             a_baby.Draw(window);
+
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_noconnection1.setString("Could not connect to the Patafour update server.");
+            t_noconnection2.setString("Check your internet connection and try again.");
+            t_tryagain.setString("Try again");
+
+            t_playoffline.setString("Play offline");
+            t_playoffline.setCharacterSize(30);
+
+            t_noconnection1.setOrigin(t_noconnection1.getGlobalBounds().width/2,t_noconnection1.getGlobalBounds().height/2);
+            t_noconnection1.setPosition(window.getSize().x/2,window.getSize().y/2-96);
+
+            t_noconnection2.setOrigin(t_noconnection2.getGlobalBounds().width/2,t_noconnection2.getGlobalBounds().height/2);
+            t_noconnection2.setPosition(window.getSize().x/2,window.getSize().y/2-60);
+
+            t_tryagain.setOrigin(t_tryagain.getGlobalBounds().width/2,t_tryagain.getGlobalBounds().height/2);
+            t_tryagain.setPosition(window.getSize().x/2,window.getSize().y/2);
+
+            t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
+            t_playoffline.setPosition(window.getSize().x/2,window.getSize().y/2+36);
+
+            t_tryagain.setFillColor(sf::Color::White);
+
+            if(mouseX > t_tryagain.getPosition().x-t_tryagain.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_tryagain.getPosition().x+t_tryagain.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_tryagain.getPosition().y-t_tryagain.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_tryagain.getPosition().y+t_tryagain.getGlobalBounds().height/2)
+                        {
+                            t_tryagain.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 3;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            t_playoffline.setFillColor(sf::Color::White);
+
+            if(mouseX > t_playoffline.getPosition().x-t_playoffline.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_playoffline.getPosition().x+t_playoffline.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_playoffline.getPosition().y-t_playoffline.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_playoffline.getPosition().y+t_playoffline.getGlobalBounds().height/2)
+                        {
+                            t_playoffline.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 10;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(t_noconnection1);
+            window.draw(t_noconnection2);
+            window.draw(t_tryagain);
+            window.draw(t_playoffline);
+
+            window.setView(temp);
 
             break;
         }
@@ -1767,9 +1881,13 @@ void Earthend::Init(sf::RenderWindow& window)
             window.draw(t_username);
             window.draw(t_password);
 
+            t_playoffline.setCharacterSize(24);
+            t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
+
             t_login.setPosition(400,388);
             t_create.setPosition(400,422);
             t_playoffline.setPosition(400,458);
+
 
             t_login.setColor(sf::Color(192,192,192,255));
             t_create.setColor(sf::Color(192,192,192,255));
@@ -1799,6 +1917,10 @@ void Earthend::Init(sf::RenderWindow& window)
             window.draw(t_login);
             window.draw(t_create);
             window.draw(t_playoffline);
+
+            t_version.setOrigin(0,t_version.getGlobalBounds().height);
+            t_version.setPosition(4,window.getSize().y-10);
+            window.draw(t_version);
 
             t_newsheader.setPosition(rect_2.getPosition().x+(window.getSize().x-rect_2.getPosition().x)/2,14);
             t_news.setPosition(rect_2.getPosition().x+8,46);

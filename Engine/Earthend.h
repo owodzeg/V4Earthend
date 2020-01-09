@@ -20,7 +20,7 @@ using namespace std;
 class Earthend
 {
     public:
-    string launcher_ver = "v1.0.8";
+    string launcher_ver = "v1.0.11";
 
     Download download;
     Camera camera;

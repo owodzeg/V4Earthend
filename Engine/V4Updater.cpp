@@ -12,7 +12,7 @@ V4Updater::V4Updater()
 
 void V4Updater::Init()
 {
-    sf::RenderWindow window(sf::VideoMode(1280,720),"Patafour Launcher");
+    sf::RenderWindow window(sf::VideoMode(1280,720),"Patafour Launcher", sf::Style::Titlebar | sf::Style::Close);
 
     window.setFramerateLimit(240);
     window.setKeyRepeatEnabled(false);
