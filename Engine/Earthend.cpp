@@ -755,10 +755,23 @@ void Earthend::FirstRunDownload()
 
                     string scmd = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.desktop$\" \"Patafour\"";
                     string scmd2 = "nircmdc.exe shortcut \""+installdir+"\\Patafour.exe"+"\" \"~$folder.programs$\\Patafour\" \"Launch Patafour\"";
+                    //if(b_desktop)
+                    //system(scmd.c_str());
+                    //if(b_startmenu)
+                    //system(scmd2.c_str());
+
+                    STARTUPINFO si={sizeof(si)};
+                    PROCESS_INFORMATION pi;
+
+                    ///windows stupid lpstr workaround
+                    LPSTR cmd1 = const_cast<char *>(scmd.c_str());
+                    LPSTR cmd2 = const_cast<char *>(scmd2.c_str());
+
                     if(b_desktop)
-                    system(scmd.c_str());
+                    CreateProcess(NULL, cmd1, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+
                     if(b_startmenu)
-                    system(scmd2.c_str());
+                    CreateProcess(NULL, cmd2, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 
                     system("del nircmdc.exe");
 
@@ -777,7 +790,9 @@ void Earthend::FirstRunDownload()
 
 void Earthend::CheckForUpdates()
 {
-    string newsHeader = download.dl_str("pastebin.com","/raw/3a6zfx2C");
+    string newsHeader = download.dl_str("dl.patafourgame.com","/getchangelog.php");
+
+    cout << newsHeader << endl;
 
     if(newsHeader == "")
     {
@@ -829,8 +844,20 @@ void Earthend::CheckForUpdates()
 
                 if(loc_hash == web_hash)
                 {
-                    cout << "Game is up to date, continue" << endl;
-                    state = 10;
+                    cout << "Game is up to date, check file integrity" << endl;
+
+                    bool result = CheckFileIntegrity("hero", "game");
+
+                    if(result)
+                    {
+                        ///Files not matching. Ask for update
+                        state = 11;
+                    }
+                    else
+                    {
+                        ///Files matching everything is correct.
+                        state = 10;
+                    }
                 }
                 else
                 {
@@ -975,6 +1002,7 @@ void Earthend::UpdateProduct(string productID, string directory)
                     {
                         cout << " verified!" << endl;
                         cur_downloaded += atoi(web_sizes[i].c_str());
+                        old_percentage = cur_percentage;
                         cur_percentage = float(cur_downloaded) / float(max_downloaded) * float(100);
                     }
                     else
@@ -1007,6 +1035,112 @@ void Earthend::UpdateProduct(string productID, string directory)
             }
         }
     }
+}
+
+bool Earthend::CheckFileIntegrity(string productID, string directory)
+{
+    cout << "Updating product " << productID << endl;
+
+    string version = download.dl_str_post("dl.patafourgame.com","/getversion.php","product_id="+productID);
+
+    if(force_exit)
+    {
+        state = -1;
+    }
+
+    cout << "version: " << version << endl;
+
+    if((version == "") && (state != -1))
+    {
+        state = -1;
+    }
+    else
+    {
+        string f_list = download.dl_str_post("dl.patafourgame.com","/getfiles.php","product_id="+productID+"&product_ver="+version);
+        cout << "Files: " << endl << f_list << endl;
+
+        if(force_exit)
+        {
+            state = -1;
+        }
+
+        if((f_list == "") && (state != -1))
+        {
+            state = -1;
+        }
+        else
+        {
+            string file,start_dir;
+            vector<string> web_file,web_hash,web_sizes,loc_file;
+
+            stringstream oss(f_list);
+            while(getline(oss,file,'\n'))
+            {
+                if(file.find("START_DIR:") != std::string::npos)
+                {
+                    start_dir = file.substr(file.find_first_of(":")+1);
+                }
+                else if(file.find("TOTAL_SIZE:") != std::string::npos)
+                {
+                    string str_total = file.substr(file.find_first_of(":")+1);
+                    total_size = atoi(str_total.c_str());
+                    max_downloaded = total_size;
+                }
+                else
+                {
+                    cout << file << endl;
+                    vector<string> f_params = split(file,',');
+
+                    string fname = f_params[0];
+                    cout << "web_file: " << fname << endl;
+
+                    web_file.push_back(fname);
+                    fname = fname.substr(fname.find(start_dir) + start_dir.size());
+                    cout << "loc_file: " << fname << endl;
+                    loc_file.push_back(fname);
+                    web_hash.push_back(f_params[1]);
+                    web_sizes.push_back(f_params[2]);
+                }
+            }
+
+            for(int i=0; i<loc_file.size(); i++)
+            {
+                if(force_exit)
+                {
+                    state = -1;
+                    break;
+                }
+
+                bool shouldUpdate = true;
+
+                string realdir = directory+"/"+loc_file[i];
+                cout << "Check for file " << realdir << endl;
+
+                if(file_exists(realdir))
+                {
+                    string cur_hash = getFileHash(realdir);
+                    cout << "cur_hash: " << cur_hash << " web_hash: " << web_hash[i] << endl;
+
+                    if(cur_hash == web_hash[i])
+                    {
+                        cout << "File already exists and doesn't need a replacement." << endl;
+                        shouldUpdate = false;
+                    }
+                    else
+                    {
+                        cout << "File has a different signature therefore it has been changed." << endl;
+                    }
+                }
+
+                if(shouldUpdate)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 void Earthend::Init(sf::RenderWindow& window)
@@ -1407,8 +1541,16 @@ void Earthend::Init(sf::RenderWindow& window)
 
             t_updating_file.setCharacterSize(18);
 
-            t_updating_per.setCharacterSize(16 + (24*cur_percentage/100));
-            t_updating_per.setString(to_string_with_precision(cur_percentage,2)+"%");
+            if(display_percentage < cur_percentage)
+            {
+                display_percentage += (cur_percentage - display_percentage) / float(30);
+            }
+
+            if(display_percentage >= 100)
+            display_percentage = 100;
+
+            t_updating_per.setCharacterSize(16 + (24*display_percentage/100));
+            t_updating_per.setString(to_string_with_precision(display_percentage,2)+"%");
 
             t_updating_per.setOrigin(t_updating_per.getGlobalBounds().width/2,t_updating_per.getGlobalBounds().height/2);
             t_updating_file.setOrigin(t_updating_file.getGlobalBounds().width/2,t_updating_file.getGlobalBounds().height/2);
@@ -1650,10 +1792,18 @@ void Earthend::Init(sf::RenderWindow& window)
 
             t_updating_file.setCharacterSize(18);
 
-            t_updating_per.setCharacterSize(16 + (24*cur_percentage/100));
-            t_updating_per.setString(to_string_with_precision(cur_percentage,2)+"%");
+            if(display_percentage < cur_percentage)
+            {
+                display_percentage += (cur_percentage - display_percentage) / float(100);
+            }
 
-            t_updating_per.setOrigin(t_updating_per.getGlobalBounds().width/2,t_updating_per.getGlobalBounds().height/2);
+            if(display_percentage >= 100)
+            display_percentage = 100;
+
+            t_updating_per.setCharacterSize(16 + (24*display_percentage/100));
+            t_updating_per.setString(to_string_with_precision(display_percentage,2)+"%");
+            t_updating_per.setOrigin(t_updating_per.getGlobalBounds().width/2, t_updating_per.getGlobalBounds().height/2);
+
             t_updating_file.setOrigin(t_updating_file.getGlobalBounds().width/2,t_updating_file.getGlobalBounds().height/2);
 
             t_updating_per.setPosition(window.getSize().x/2,window.getSize().y/2+30);
@@ -1930,6 +2080,97 @@ void Earthend::Init(sf::RenderWindow& window)
 
             t_error.setPosition(s_loginbox.getPosition().x-(s_loginbox.getGlobalBounds().width/2)+8,s_loginbox.getPosition().y-44);
             window.draw(t_error);
+
+            window.setView(temp);
+
+            break;
+        }
+
+        case 11: ///File integrity found not correct files
+        {
+            window.clear(sf::Color(0,0,0));
+
+            ///updater code
+            camera.Work(window,fps);
+            test_bg.setCamera(camera);
+            test_bg.Draw(window);
+
+            a_baby.fps = fps;
+            a_baby.x += 25 / float(fps);
+            a_baby.Draw(window);
+
+            sf::View temp;
+            temp = window.getView();
+
+            window.setView(window.getDefaultView());
+
+            window.draw(rect_1);
+
+            t_updatefound1.setString("Patafour updater found incorrect or missing files.");
+            t_updatefound2.setString("The files will be redownloaded. Proceed?");
+            t_yes.setString("Yes");
+            t_no.setString("No");
+
+            t_updatefound1.setOrigin(t_updatefound1.getGlobalBounds().width/2,t_updatefound1.getGlobalBounds().height/2);
+            t_updatefound1.setPosition(window.getSize().x/2,window.getSize().y/2-100);
+
+            t_updatefound2.setOrigin(t_updatefound2.getGlobalBounds().width/2,t_updatefound2.getGlobalBounds().height/2);
+            t_updatefound2.setPosition(window.getSize().x/2,window.getSize().y/2-60);
+
+            t_yes.setOrigin(t_yes.getGlobalBounds().width/2,t_yes.getGlobalBounds().height/2);
+            t_yes.setPosition(window.getSize().x/2,window.getSize().y/2);
+
+            t_no.setOrigin(t_no.getGlobalBounds().width/2,t_no.getGlobalBounds().height/2);
+            t_no.setPosition(window.getSize().x/2,window.getSize().y/2+36);
+
+            t_yes.setFillColor(sf::Color::White);
+
+            if(mouseX > t_yes.getPosition().x-t_yes.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_yes.getPosition().x+t_yes.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_yes.getPosition().y-t_yes.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_yes.getPosition().y+t_yes.getGlobalBounds().height/2)
+                        {
+                            t_yes.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 7;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            t_no.setFillColor(sf::Color::White);
+
+            if(mouseX > t_no.getPosition().x-t_no.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_no.getPosition().x+t_no.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_no.getPosition().y-t_no.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_no.getPosition().y+t_no.getGlobalBounds().height/2)
+                        {
+                            t_no.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                state = 10;
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            window.draw(t_updatefound1);
+            window.draw(t_updatefound2);
+            window.draw(t_yes);
+            window.draw(t_no);
 
             window.setView(temp);
 

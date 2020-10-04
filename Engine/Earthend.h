@@ -20,7 +20,7 @@ using namespace std;
 class Earthend
 {
     public:
-    string launcher_ver = "v1.0.11";
+    string launcher_ver = "v1.0.13";
 
     Download download;
     Camera camera;
@@ -116,6 +116,8 @@ class Earthend
     int cur_downloaded = 0; ///current progress
     int max_downloaded = 0; ///amount of data to download
     float cur_percentage = 0;
+    float old_percentage = 0;
+    float display_percentage = 0;
 
     string web_file_list;
 
@@ -139,6 +141,7 @@ class Earthend
     void FirstRunDownload();
     void CheckForUpdates();
     void UpdateProduct(string productID, string directory);
+    bool CheckFileIntegrity(string productID, string directory);
 
     void Init(sf::RenderWindow& window);
     ~Earthend();
