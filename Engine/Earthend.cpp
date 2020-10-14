@@ -441,6 +441,7 @@ Earthend::Earthend()
         t_login.setFont(p4kaku);
         t_create.setFont(p4kaku);
         t_playoffline.setFont(p4kaku);
+        t_opengamedir.setFont(p4kaku);
         t_version.setFont(p4kaku);
         t_error.setFont(p4kaku);
 
@@ -452,6 +453,7 @@ Earthend::Earthend()
         t_login.setFillColor(sf::Color::White);
         t_create.setFillColor(sf::Color::White);
         t_playoffline.setFillColor(sf::Color::White);
+        t_opengamedir.setFillColor(sf::Color::White);
         t_version.setFillColor(sf::Color(255,255,255,128));
         t_error.setFillColor(sf::Color(255,0,0,164));
 
@@ -462,6 +464,7 @@ Earthend::Earthend()
         t_login.setString("Log in");
         t_create.setString("Create new account");
         t_playoffline.setString("Play offline");
+        t_opengamedir.setString("Open game directory");
         t_version.setString("build V4Earthend-"+launcher_ver);
         t_error.setString("Login and Register are not finished yet.");
 
@@ -473,6 +476,7 @@ Earthend::Earthend()
         t_login.setCharacterSize(24);
         t_create.setCharacterSize(24);
         t_playoffline.setCharacterSize(24);
+        t_opengamedir.setCharacterSize(24);
         t_version.setCharacterSize(24);
         t_error.setCharacterSize(14);
 
@@ -484,6 +488,7 @@ Earthend::Earthend()
         t_login.setOrigin(t_login.getGlobalBounds().width/2,t_login.getGlobalBounds().height/2);
         t_create.setOrigin(t_create.getGlobalBounds().width/2,t_create.getGlobalBounds().height/2);
         t_playoffline.setOrigin(t_playoffline.getGlobalBounds().width/2,t_playoffline.getGlobalBounds().height/2);
+        t_opengamedir.setOrigin(t_opengamedir.getGlobalBounds().width/2,t_opengamedir.getGlobalBounds().height/2);
         t_version.setOrigin(t_version.getGlobalBounds().width/2,t_version.getGlobalBounds().height/2);
         t_error.setOrigin(0,t_error.getGlobalBounds().height/2);
 
@@ -2037,6 +2042,7 @@ void Earthend::Init(sf::RenderWindow& window)
             t_login.setPosition(400,388);
             t_create.setPosition(400,422);
             t_playoffline.setPosition(400,458);
+            t_opengamedir.setPosition(400,494);
 
 
             t_login.setColor(sf::Color(192,192,192,255));
@@ -2064,9 +2070,33 @@ void Earthend::Init(sf::RenderWindow& window)
                 }
             }
 
+            t_opengamedir.setFillColor(sf::Color::White);
+
+            if(mouseX > t_opengamedir.getPosition().x-t_opengamedir.getGlobalBounds().width/2)
+            {
+                if(mouseX < t_opengamedir.getPosition().x+t_opengamedir.getGlobalBounds().width/2)
+                {
+                    if(mouseY > t_opengamedir.getPosition().y-t_opengamedir.getGlobalBounds().height/2)
+                    {
+                        if(mouseY < t_opengamedir.getPosition().y+t_opengamedir.getGlobalBounds().height/2)
+                        {
+                            t_opengamedir.setFillColor(sf::Color::Green);
+
+                            if(mouseLeftClick)
+                            {
+                                ShellExecute(NULL, "open", installdir.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+                                mouseLeftClick = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+
             window.draw(t_login);
             window.draw(t_create);
             window.draw(t_playoffline);
+            window.draw(t_opengamedir);
 
             t_version.setOrigin(0,t_version.getGlobalBounds().height);
             t_version.setPosition(4,window.getSize().y-10);
@@ -2106,7 +2136,7 @@ void Earthend::Init(sf::RenderWindow& window)
 
             window.draw(rect_1);
 
-            t_updatefound1.setString("Patafour updater found incorrect or missing files.");
+            t_updatefound1.setString("Patafour updater found missing, corrupted or modified files.");
             t_updatefound2.setString("The files will be redownloaded. Proceed?");
             t_yes.setString("Yes");
             t_no.setString("No");

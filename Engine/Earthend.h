@@ -89,7 +89,7 @@ class Earthend
 
     sf::Text t_username,t_email,t_password;
     sf::Text t_newsheader,t_news;
-    sf::Text t_login,t_create,t_playoffline;
+    sf::Text t_login,t_create,t_playoffline,t_opengamedir;
     sf::Text t_version;
     sf::Text t_error;
 
