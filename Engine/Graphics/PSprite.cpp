@@ -12,7 +12,7 @@ PSprite::PSprite()
 {
 }
 
-void PSprite::loadFromFile(std::string file, int q)
+void PSprite::loadFromFile(std::string file, int q, bool downscale)
 {
     if (qualitySetting != q && qualitySetting != -1)
     {
@@ -61,15 +61,18 @@ void PSprite::loadFromFile(std::string file, int q)
     }
 
     qualitySetting = q;
-    resSetting = 1;
+    resSetting = 3;
 
     SPDLOG_INFO("Loading PSprite: {}", file);
     texturePath = file;
 
-    s.setTexture(TextureManager::getInstance().getTexture(file, q), true);
+    if(downscale)
+        s.setTexture(TextureManager::getInstance().getTexture(file, q), true);
+    else
+        s.setTexture(TextureManager::getInstance().getTexture(file, q, false), true);
 }
 
-void PSprite::loadFromFile(std::string file, int q, int r = 1)
+void PSprite::loadFromFile(std::string file, int q, int r = 1, bool downscale)
 {
     qualitySetting = q;
     resSetting = r;
@@ -291,7 +294,7 @@ void PSprite::draw(sf::RenderWindow& window)
         }
     }
 
-    //s.setTexture(t);
+    s.setTexture(TextureManager::getInstance().getTexture(texturePath));
     s.setScale(ratioX * scaleX, ratioY * scaleY);
     s.setOrigin(orX, orY);
     s.setPosition(lx * resRatioX, ly * resRatioY);
@@ -342,6 +345,7 @@ void PSprite::draw(sf::RenderWindow* window)
         resRatioY = ratio.y;
     }
 
+    s.setTexture(TextureManager::getInstance().getTexture(texturePath));
     s.setScale(ratioX * scaleX, ratioY * scaleY);
     s.setOrigin(orX, orY);
     s.setPosition(lx * resRatioX, ly * resRatioY);
@@ -383,6 +387,7 @@ void PSprite::drawShader(sf::RenderWindow* window, sf::Shader& shader)
         resRatioY = ratio.y;
     }
 
+    s.setTexture(TextureManager::getInstance().getTexture(texturePath));
     s.setScale(ratioX * scaleX, ratioY * scaleY);
     s.setOrigin(orX, orY);
     s.setPosition(lx * resRatioX, ly * resRatioY);
@@ -426,6 +431,7 @@ void PSprite::draw()
         resRatioY = ratio.y;
     }
 
+    s.setTexture(TextureManager::getInstance().getTexture(texturePath));
     s.setScale(ratioX * scaleX, ratioY * scaleY);
     s.setOrigin(orX, orY);
     s.setPosition(lx * resRatioX, ly * resRatioY);
@@ -502,7 +508,7 @@ void PSprite::update(sf::RenderWindow& window)
         }
     }
 
-    //s.setTexture(t);
+    s.setTexture(TextureManager::getInstance().getTexture(texturePath));
     s.setScale(ratioX * scaleX, ratioY * scaleY);
     s.setOrigin(orX, orY);
     s.setPosition(lx * resRatioX, ly * resRatioY);

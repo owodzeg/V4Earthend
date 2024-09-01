@@ -23,18 +23,15 @@ void setupPlatform() {}
 
 int main(int argc, char *argv[])
 {
+    // we store the args in a simple vector
+    std::vector<std::string> cmd_args;
+
     // fetch cmdline arguments
     if (argc > 1)
     {
-        // we store the args in a simple vector
-        std::vector<std::string> cmd_args;
-
         // read them from argv
         for(int i=0; i<argc; i++)
-        cmd_args.push_back(argv[i]);
-
-        // process the args further
-        // ???
+            cmd_args.emplace_back(argv[i]);
     }
 
     // Init spdlog and set base log level
@@ -48,13 +45,9 @@ int main(int argc, char *argv[])
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y-%m-%d %H-%M-%S");
 
-    // Path to where logs are stored (TO-DO: this might be different on Android)
-    std::string log_file = "logs/" + oss.str() + "-V4Hero-" + std::string(PATAFOUR_VERSION) + ".log";
-
     // Create a multi-sink logger to output for console and the logfile
     std::vector<spdlog::sink_ptr> sinks;
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file));
 
     // Combine them and set as default
     auto combined_logger = std::make_shared<spdlog::logger>("patalogger", begin(sinks), end(sinks));
@@ -71,7 +64,6 @@ int main(int argc, char *argv[])
     // note i'm using SPDLOG_x macros, its because they allow to log cpp file, function and line (regular spdlog::x doesnt do that)
     SPDLOG_INFO("Starting V4Earthend v{}.", std::string(PATAFOUR_VERSION));
     SPDLOG_INFO("SFML version: {}.{}.{}", SFML_VERSION_MAJOR, SFML_VERSION_MINOR, SFML_VERSION_PATCH);
-    SPDLOG_INFO("Saving logs to {}", log_file);
 
     // additional initialization for other platforms
     setupPlatform();
@@ -83,7 +75,7 @@ int main(int argc, char *argv[])
 
     // initialize CoreManager and the main V4Earthend class
     CoreManager::getInstance().init();
-    CoreManager::getInstance().getCore()->init();
+    CoreManager::getInstance().getCore()->init(cmd_args);
 
     return 0;
 }

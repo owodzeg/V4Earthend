@@ -46,7 +46,9 @@ set(ENGINE_FILES
         Engine/Func.cpp
         Engine/Input/InputController.cpp
         Engine/Graphics/PSprite.cpp
-        )
+        Engine/Graphics/SpriteWrapper.cpp
+        Engine/Menu/FirstRun.cpp
+)
 
 add_executable(V4Earthend ${ENGINE_FILES} main.cpp)
 

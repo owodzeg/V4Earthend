@@ -29,12 +29,33 @@ void StateManager::updateCurrentState()
 
             break;
         }
+
+        case FIRSTRUN: {
+            firstRun->draw();
+            break;
+        }
     }
 }
 
 void StateManager::initState(int state)
 {
-    
+    switch (state)
+    {
+        case ENTRY: {
+
+            break;
+        }
+
+        case FIRSTRUN: {
+            if(firstRun == nullptr)
+            {
+                firstRun = new FirstRun;
+            }
+
+            firstRun->init();
+            break;
+        }
+    }
 }
 
 void StateManager::initStateMT(int state)

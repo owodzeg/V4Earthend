@@ -9,6 +9,17 @@
 // Class for holding the texture pointers so we can make sure textures are not being copied around (as this causes all sorts of issues)
 // Thanks to https://codereview.stackexchange.com/questions/191793/resource-manager-with-sfml for the code reference
 
+class TextureManagerException : public std::exception {
+private:
+    std::string message;
+
+public:
+    TextureManagerException(std::string msg) : message(msg) {}
+    char* what () {
+        return message.data();
+    }
+};
+
 class TextureManager
 {
 public:
@@ -17,10 +28,11 @@ public:
     static TextureManager& getInstance();
     void loadTexture(const std::string& path, int quality);
     sf::Texture& getTexture(const std::string& path);
-    sf::Texture& getTexture(const std::string& path, int quality);
-    sf::Texture& scaleTexture(const std::string& path, int ratio);
+    sf::Texture& getTexture(const std::string& path, int quality, bool downscale = true);
+    sf::Texture& scaleTexture(const std::string& path, int ratio, bool unload = true);
     bool checkImageExists(const std::string& key);
     void loadImageFromFile(const std::string& path);
+    void loadImageFromFileWithScale(const std::string& path, int quality);
     void loadImageFromMemory(const std::string& key, sf::Image image, bool asTexture = false);
     sf::Image& getImage(const std::string& key);
     void loadTextureFromImage(const std::string& img_key);
@@ -28,6 +40,7 @@ public:
     void unloadImage(const std::string& key);
     void applyForceLoad(bool force);
     void reloadTextures(int quality);
+    int getRatio();
 
 private:
     TextureManager();

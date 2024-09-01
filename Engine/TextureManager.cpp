@@ -1,6 +1,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE 
 
 #include "TextureManager.h"
+#include "CoreManager.h"
 
 TextureManager::TextureManager()
 {
@@ -64,7 +65,7 @@ sf::Texture& TextureManager::getTexture(const std::string& path)
     return loadedTextures[path];
 }
 
-sf::Texture& TextureManager::getTexture(const std::string& path, int quality)
+sf::Texture& TextureManager::getTexture(const std::string& path, int quality, bool downscale)
 {
     if (loadedTextures.find(path) != loadedTextures.end() && !forceLoad)
     {
@@ -72,43 +73,52 @@ sf::Texture& TextureManager::getTexture(const std::string& path, int quality)
         return loadedTextures[path];
     } else
     {
-        if (quality < 3)
+        if(downscale)
         {
-            SPDLOG_TRACE("Quality is {}, texture needs to be downscaled", quality);
-            loadImageFromFile(path);
-
-            int ratio = 1;
-
-            switch (quality)
+            if (quality < 3)
             {
-                case 0: {
-                    ratio = 6;
-                    break;
+                SPDLOG_TRACE("Quality is {}, texture needs to be downscaled", quality);
+                loadImageFromFile(path);
+
+                int ratio = 1;
+
+                switch (quality)
+                {
+                    case 0: {
+                        ratio = 6;
+                        break;
+                    }
+
+                    case 1: {
+                        ratio = 3;
+                        break;
+                    }
+
+                    case 2: {
+                        ratio = 2;
+                        break;
+                    }
                 }
 
-                case 1: {
-                    ratio = 3;
-                    break;
-                }
-
-                case 2: {
-                    ratio = 2;
-                    break;
-                }
+                SPDLOG_INFO("Loading downscaled texture with path {} and ratio {}", path, ratio);
+                return scaleTexture(path, ratio);
+            } else
+            {
+                SPDLOG_INFO("Loading texture with path {}", path);
+                loadTexture(path, 3);
+                return loadedTextures[path];
             }
-
-            SPDLOG_INFO("Loading downscaled texture with path {} and ratio {}", path, ratio);
-            return scaleTexture(path, ratio);
-        } else
+        }
+        else
         {
-            SPDLOG_INFO("Loading texture with path {}", path);
+            SPDLOG_INFO("Loading texture (no downscale) with path {}", path);
             loadTexture(path, 3);
             return loadedTextures[path];
         }
     }
 }
 
-sf::Texture& TextureManager::scaleTexture(const std::string& path, int ratio)
+sf::Texture& TextureManager::scaleTexture(const std::string& path, int ratio, bool unload)
 {
     if (loadedImages.find(path) != loadedImages.end())
     {
@@ -164,11 +174,15 @@ sf::Texture& TextureManager::scaleTexture(const std::string& path, int ratio)
         loadTextureFromImage(path);
 
         //after loading downscaled image to texture, we no longer need to keep it in memory, so we clean it
-        unloadImage(path);
+        if(unload)
+            unloadImage(path);
 
         SPDLOG_DEBUG("Providing downscaled texture with path {}", path);
         return loadedTextures[path];
     }
+
+    SPDLOG_ERROR("Could not find appropriate texture to scale.");
+    throw TextureManagerException("Could not find appropriate texture to scale.");
 }
 
 bool TextureManager::checkImageExists(const std::string& key)
@@ -197,9 +211,52 @@ void TextureManager::loadImageFromFile(const std::string& path)
     }
 }
 
+void TextureManager::loadImageFromFileWithScale(const std::string& path, int quality)
+{
+    std::lock_guard<std::mutex> guard(resource_mutex);
+
+    if (loadedImages.find(path) == loadedImages.end() || forceLoad)
+    {
+        SPDLOG_INFO("Loading image from file {}", path);
+        loadedImages[path].loadFromFile(path);
+
+        if (quality < 3)
+        {
+            SPDLOG_TRACE("Quality is {}, texture needs to be downscaled", quality);
+
+            int ratio = 1;
+
+            switch (quality)
+            {
+                case 0: {
+                    ratio = 6;
+                    break;
+                }
+
+                case 1: {
+                    ratio = 3;
+                    break;
+                }
+
+                case 2: {
+                    ratio = 2;
+                    break;
+                }
+            }
+
+            scaleTexture(path, ratio);
+        }
+    } else
+    {
+        //SPDLOG_ERROR("Couldn't load image {}: image already loaded", key);
+        //in theory this shouldnt be an error
+    }
+}
+
 void TextureManager::loadImageFromMemory(const std::string& key, sf::Image image, bool asTexture)
 {
     std::lock_guard<std::mutex> guard(resource_mutex);
+    SPDLOG_DEBUG("load image {} from memory. asTexture: {}", key, asTexture);
 
     if (!asTexture)
     {
@@ -209,7 +266,7 @@ void TextureManager::loadImageFromMemory(const std::string& key, sf::Image image
             loadedImages[key] = image;
         } else
         {
-            //SPDLOG_ERROR("Couldn't load image {}: image already loaded", key);
+            SPDLOG_ERROR("Couldn't load image {}: image already loaded", key);
             //in theory this shouldnt be an error
         }
     } else
@@ -218,22 +275,25 @@ void TextureManager::loadImageFromMemory(const std::string& key, sf::Image image
         {
             SPDLOG_INFO("Loading image from memory into texture with key {}", key);
             loadedTextures[key].loadFromImage(image);
+        } else
+        {
+            SPDLOG_ERROR("Couldn't load image {}: image already loaded", key);
+            //in theory this shouldnt be an error
         }
     }
 }
 
 sf::Image& TextureManager::getImage(const std::string& key)
 {
-    if (loadedImages.find(key) != loadedImages.end())
+    auto it = loadedImages.find(key);
+    if(it != loadedImages.end())
     {
         SPDLOG_TRACE("Providing image with key {}", key);
-        return loadedImages[key];
-    } else
-    {
-        SPDLOG_ERROR("Couldn't load image {}: image doesn't exist", key);
-        sf::Image image; //create empty image to prevent crashes
-        return image;
+        return it->second;
     }
+
+    SPDLOG_ERROR("Couldn't load image {}: image doesn't exist", key);
+    throw TextureManagerException(std::format("Couldn't load image {}: image doesn't exist", key));
 }
 
 void TextureManager::loadTextureFromImage(const std::string& img_key)
@@ -274,4 +334,30 @@ void TextureManager::reloadTextures(int quality)
         std::string path = texture.first;
         loadTexture(path, quality);
     }
+}
+
+int TextureManager::getRatio()
+{
+    int quality = CoreManager::getInstance().getConfig()->GetInt("textureQuality");
+    int ratio = 1;
+
+    switch (quality)
+    {
+        case 0: {
+            ratio = 6;
+            break;
+        }
+
+        case 1: {
+            ratio = 3;
+            break;
+        }
+
+        case 2: {
+            ratio = 2;
+            break;
+        }
+    }
+
+    return ratio;
 }

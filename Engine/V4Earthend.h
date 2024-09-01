@@ -10,15 +10,10 @@ class V4Earthend
 private:
     // ...
 public:
-    // Static GUI always on screen
-    sf::Font f_font;
-    sf::Text t_version;
-    sf::Text t_fps;
-
     // Variables for delta time calc
-    float fps = 60;
+    float fps = 240;
     sf::Clock fpsclock;
-    unsigned int framerate_limit = 60;
+    unsigned int framerate_limit = 240;
     std::vector<float> frame_times;
 
     // Fetch current version from CMakeLists.txt
@@ -34,6 +29,6 @@ public:
     // Functions
     V4Earthend();
     float getFPS();
-    void init();
+    void init(std::vector<std::string>& cmd_args);
 };
 #endif // V4EARTHEND_H

@@ -2,9 +2,10 @@
 #define STATEMANAGER_H
 
 #include <spdlog/spdlog.h>
-#include <variant>
 #include <thread>
 #include <vector>
+
+#include "Menu/FirstRun.h"
 
 // Class for holding the pointers to commonly used important game contents
 class StateManager
@@ -12,7 +13,8 @@ class StateManager
 public:
     enum GameState
     {
-        ENTRY = 0
+        ENTRY = 0,
+        FIRSTRUN = 1
     };
 
     static StateManager& getInstance();
@@ -21,6 +23,8 @@ public:
     void initStateMT(int state);
     void setState(int state);
     int getState();
+
+    FirstRun* firstRun;
 
 private:
     StateManager();
