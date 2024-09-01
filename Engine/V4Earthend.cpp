@@ -67,6 +67,7 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
     }
     else
     {
+        StateManager::getInstance().initState(StateManager::FIRSTRUN);
         StateManager::getInstance().setState(StateManager::FIRSTRUN);
     }
 
@@ -106,7 +107,7 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
         while (frame_times.size() > framerate_limit)
             frame_times.erase(frame_times.begin());
 
-        window->clear();
+        window->clear(sf::Color(64,64,64));
 
         // Draw whatever state is currently in use
         StateManager::getInstance().updateCurrentState();
