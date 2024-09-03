@@ -23,92 +23,94 @@ void FirstRun::draw()
 {
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
 
+    float speed_delta = speed / CoreManager::getInstance().getCore()->fps * 240;
+
     if(fabs(r_head_c - r_head_d) > 0)
     {
         if(r_head_c > r_head_d)
         {
-            r_head_c -= fabs(r_head_c - r_head_d) * speed;
+            r_head_c -= fabs(r_head_c - r_head_d) * speed_delta;
         }
         else
         {
-            r_head_c += fabs(r_head_c - r_head_d) * speed;
+            r_head_c += fabs(r_head_c - r_head_d) * speed_delta;
         }
     }
     if(fabs(r_white_c - r_white_d) > 0)
     {
         if(r_white_c > r_white_d)
         {
-            r_white_c -= fabs(r_white_c - r_white_d) * speed;
+            r_white_c -= fabs(r_white_c - r_white_d) * speed_delta;
         }
         else
         {
-            r_white_c += fabs(r_white_c - r_white_d) * speed;
+            r_white_c += fabs(r_white_c - r_white_d) * speed_delta;
         }
     }
     if(fabs(r_pupil_c - r_pupil_d) > 0)
     {
         if(r_pupil_c > r_pupil_d)
         {
-            r_pupil_c -= fabs(r_pupil_c - r_pupil_d) * speed;
+            r_pupil_c -= fabs(r_pupil_c - r_pupil_d) * speed_delta;
         }
         else
         {
-            r_pupil_c += fabs(r_pupil_c - r_pupil_d) * speed;
+            r_pupil_c += fabs(r_pupil_c - r_pupil_d) * speed_delta;
         }
     }
     if(fabs(pupil_offset_x_c - pupil_offset_x_d) > 0)
     {
         if(pupil_offset_x_c > pupil_offset_x_d)
         {
-            pupil_offset_x_c -= fabs(pupil_offset_x_c - pupil_offset_x_d) * speed;
+            pupil_offset_x_c -= fabs(pupil_offset_x_c - pupil_offset_x_d) * speed_delta;
         }
         else
         {
-            pupil_offset_x_c += fabs(pupil_offset_x_c - pupil_offset_x_d) * speed;
+            pupil_offset_x_c += fabs(pupil_offset_x_c - pupil_offset_x_d) * speed_delta;
         }
     }
     if(fabs(pupil_offset_y_c - pupil_offset_y_d) > 0)
     {
         if(pupil_offset_y_c > pupil_offset_y_d)
         {
-            pupil_offset_y_c -= fabs(pupil_offset_y_c - pupil_offset_y_d) * speed;
+            pupil_offset_y_c -= fabs(pupil_offset_y_c - pupil_offset_y_d) * speed_delta;
         }
         else
         {
-            pupil_offset_y_c += fabs(pupil_offset_y_c - pupil_offset_y_d) * speed;
+            pupil_offset_y_c += fabs(pupil_offset_y_c - pupil_offset_y_d) * speed_delta;
         }
     }
     if(fabs(pupil_angle_c - pupil_angle_d) > 0)
     {
         if(pupil_angle_c > pupil_angle_d)
         {
-            pupil_angle_c -= fabs(pupil_angle_c - pupil_angle_d) * speed;
+            pupil_angle_c -= fabs(pupil_angle_c - pupil_angle_d) * speed_delta;
         }
         else
         {
-            pupil_angle_c += fabs(pupil_angle_c - pupil_angle_d) * speed;
+            pupil_angle_c += fabs(pupil_angle_c - pupil_angle_d) * speed_delta;
         }
     }
     if(fabs(pon_x_c - pon_x_d) > 0)
     {
         if(pon_x_c > pon_x_d)
         {
-            pon_x_c -= fabs(pon_x_c - pon_x_d) * speed;
+            pon_x_c -= fabs(pon_x_c - pon_x_d) * speed_delta;
         }
         else
         {
-            pon_x_c += fabs(pon_x_c - pon_x_d) * speed;
+            pon_x_c += fabs(pon_x_c - pon_x_d) * speed_delta;
         }
     }
     if(fabs(pon_y_c - pon_y_d) > 0)
     {
         if(pon_y_c > pon_y_d)
         {
-            pon_y_c -= fabs(pon_y_c - pon_y_d) * speed;
+            pon_y_c -= fabs(pon_y_c - pon_y_d) * speed_delta;
         }
         else
         {
-            pon_y_c += fabs(pon_y_c - pon_y_d) * speed;
+            pon_y_c += fabs(pon_y_c - pon_y_d) * speed_delta;
         }
     }
 
@@ -192,18 +194,25 @@ void FirstRun::draw()
         auto pon = window->mapPixelToCoords(sf::Vector2i(pon_x_c, pon_y_c));
         sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
 
-        auto len = sf::Vector2f(mouse.x-pon.x, mouse.y-pon.y);
-        auto deg = atan2(len.x, len.y) * 180/3.14159;
+        auto len = sf::Vector2f(mouse.x - pon.x, mouse.y - pon.y);
+        prev_deg = deg;
+        deg = atan2(len.y, len.x) * 180 / 3.14159;
+        deg -= 90;
 
-        if(deg < -150)
-            deg = -150;
-        if(deg > 150)
-            deg = 150;
+        if (deg < 0)
+            deg += 360;
 
-        pupil_angle_d = -(deg);
+        prev_real_deg = real_deg;
+        real_deg = deg;
 
+        auto diff = real_deg - prev_real_deg;
 
-        SPDLOG_DEBUG("mouse {} {} pon {} {} len {} {} deg {}", mouse.x, mouse.y, pon.x, pon.y, len.x, len.y, pupil_angle_d);
+        if (diff > 180)
+            diff -= 360;
+        else if (diff < -180)
+            diff += 360;
+
+        pupil_angle_d += diff;
     }
 
     p_head.setRadius(r_head_c);

@@ -19,6 +19,9 @@ public:
   float pupil_offset_y_c = 0, pupil_offset_y_d = 0;
   float pupil_angle_c = 0, pupil_angle_d = 0;
 
+  float real_deg = 0, prev_real_deg = 0;
+  float deg = 0, prev_deg = 0;
+
   float speed = 0.015;
 
   void init();
