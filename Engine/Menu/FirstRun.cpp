@@ -9,6 +9,7 @@ void FirstRun::init()
     p_head.setFillColor(sf::Color::Black);
     p_white.setFillColor(sf::Color::White);
     p_pupil.setFillColor(sf::Color::Black);
+    p_pupil_closed.setFillColor(sf::Color::Black);
 
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
     pon_x_c = window->getSize().x/2;
@@ -23,7 +24,8 @@ void FirstRun::draw()
 {
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
 
-    float speed_delta = speed / CoreManager::getInstance().getCore()->fps * 240;
+    float fps = CoreManager::getInstance().getCore()->fps;
+    float speed_delta = speed / fps * 240;
 
     if(fabs(r_head_c - r_head_d) > 0)
     {
@@ -113,6 +115,28 @@ void FirstRun::draw()
             pon_y_c += fabs(pon_y_c - pon_y_d) * speed_delta;
         }
     }
+    if(fabs(pon_y_offset_c - pon_y_offset_d) > 0)
+    {
+        if(pon_y_offset_c > pon_y_offset_d)
+        {
+            pon_y_offset_c -= fabs(pon_y_offset_c - pon_y_offset_d) * speed_delta;
+        }
+        else
+        {
+            pon_y_offset_c += fabs(pon_y_offset_c - pon_y_offset_d) * speed_delta;
+        }
+    }
+    if(fabs(pon_x_offset_c - pon_x_offset_d) > 0)
+    {
+        if(pon_x_offset_c > pon_x_offset_d)
+        {
+            pon_x_offset_c -= fabs(pon_x_offset_c - pon_x_offset_d) * speed_delta;
+        }
+        else
+        {
+            pon_x_offset_c += fabs(pon_x_offset_c - pon_x_offset_d) * speed_delta;
+        }
+    }
 
     if(a_state == 0 && a_clock.getElapsedTime().asSeconds() > 2)
     {
@@ -175,7 +199,7 @@ void FirstRun::draw()
 
     if(a_state == 6 && a_clock.getElapsedTime().asSeconds() > 1)
     {
-        speed = 0.01;
+        speed = 0.015;
         pupil_angle_d = 0;
         pupil_angle_c = 0;
         pupil_offset_y_d = -17;
@@ -185,8 +209,9 @@ void FirstRun::draw()
         a_clock.restart();
     }
 
-    if(a_state == 7 && a_clock.getElapsedTime().asSeconds() > 2)
+    if(a_state == 7 && a_clock.getElapsedTime().asSeconds() > 1.2)
     {
+        // follow movement
         speed = 0.05;
 
         sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
@@ -213,6 +238,39 @@ void FirstRun::draw()
             diff += 360;
 
         pupil_angle_d += diff;
+
+        // don't touch!
+        //SPDLOG_DEBUG("mouse {} {}", mouse.x, mouse.y);
+        if(mouse.x > pon_x_c-r_white_c && mouse.x < pon_x_c+r_white_c && mouse.y > pon_y_c-r_white_c && mouse.y < pon_y_c+r_white_c)
+        {
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            {
+                if(!peck)
+                {
+                    a_state = 8;
+                    shake = -50;
+                    a_clock.restart();
+                    peck = true;
+                }
+                SPDLOG_INFO("peck");
+            }
+        }
+    }
+
+    if(a_state == 8)
+    {
+        if(shake < 0)
+        {
+            shake += 50 / fps;
+            pon_x_offset_d = pow(std::numbers::e, -0.1*shake)*sin(shake);
+
+        }
+
+        if(a_clock.getElapsedTime().asSeconds() >= 1.2)
+        {
+            peck = false;
+            a_state = 7;
+        }
     }
 
     p_head.setRadius(r_head_c);
@@ -223,11 +281,18 @@ void FirstRun::draw()
     p_pupil.setOrigin(r_pupil_c + pupil_offset_x_c, r_pupil_c + pupil_offset_y_c);
     p_pupil.setRotation(pupil_angle_c);
 
-    p_head.setPosition(pon_x_c, pon_y_c);
-    p_white.setPosition(pon_x_c, pon_y_c);
-    p_pupil.setPosition(pon_x_c, pon_y_c);
+    p_head.setPosition(pon_x_c + pon_x_offset_c, pon_y_c + pon_y_offset_c);
+    p_white.setPosition(pon_x_c + pon_x_offset_c, pon_y_c + pon_y_offset_c);
+    p_pupil.setPosition(pon_x_c + pon_x_offset_c, pon_y_c + pon_y_offset_c);
+
+    p_pupil_closed.setSize(sf::Vector2f(r_pupil_c*2,r_pupil_c));
+    p_pupil_closed.setOrigin(r_pupil_c,r_pupil_c*0.5);
+    p_pupil_closed.setPosition(pon_x_c + pon_x_offset_c, pon_y_c + pon_y_offset_c);
 
     window->draw(p_head);
     window->draw(p_white);
-    window->draw(p_pupil);
+    if(!peck)
+        window->draw(p_pupil);
+    else
+        window->draw(p_pupil_closed);
 }
