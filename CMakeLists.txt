@@ -35,6 +35,16 @@ FetchContent_Declare(spdlog
         GIT_TAG v1.11.0)
 FetchContent_MakeAvailable(spdlog)
 
+FetchContent_Declare(curl
+        GIT_REPOSITORY https://github.com/curl/curl.git
+        DOWNLOAD_EXTRACT_TIMESTAMP true
+        OVERRIDE_FIND_PACKAGE
+)
+
+FetchContent_MakeAvailable(curl)
+
+find_package(curl)
+
 set(ENGINE_FILES
         Engine/V4Earthend.cpp
         Engine/CoreManager.cpp
@@ -48,6 +58,8 @@ set(ENGINE_FILES
         Engine/Graphics/PSprite.cpp
         Engine/Graphics/SpriteWrapper.cpp
         Engine/Menu/FirstRun.cpp
+        Engine/Worker.cpp
+        Engine/Worker.h
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} main.cpp)
@@ -73,7 +85,8 @@ target_link_libraries(V4Earthend PRIVATE
         sfml-graphics
         sfml-network
         nlohmann_json::nlohmann_json
-        spdlog::spdlog)
+        spdlog::spdlog
+        CURL::libcurl)
 
 if (OS STREQUAL "Linux")
     find_package(X11 REQUIRED)
