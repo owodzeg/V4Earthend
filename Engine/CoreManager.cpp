@@ -35,6 +35,9 @@ void CoreManager::init()
 
     // After we created prerequisities for V4Earthend, we can safely create it.
     core = new V4Earthend;
+
+    // Worker for all updater needs
+    worker = new Worker;
 }
 
 // Returns a pointer to V4Earthend.
@@ -65,4 +68,10 @@ InputController* CoreManager::getInputController()
 sf::RenderWindow* CoreManager::getWindow()
 {
     return window;
+}
+
+// Returns a pointer to the worker.
+Worker* CoreManager::getWorker()
+{
+    return worker;
 }

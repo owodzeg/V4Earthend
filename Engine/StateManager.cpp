@@ -39,6 +39,8 @@ void StateManager::updateCurrentState()
 
 void StateManager::initState(int state)
 {
+    Worker* worker = CoreManager::getInstance().getWorker();
+
     switch (state)
     {
         case ENTRY: {
@@ -53,6 +55,17 @@ void StateManager::initState(int state)
             }
 
             firstRun->init();
+            initStateMT(INITWORKER);
+            break;
+        }
+
+        case INITWORKER: {
+            if(worker == nullptr)
+            {
+                worker = new Worker;
+            }
+
+            worker->init();
             break;
         }
     }

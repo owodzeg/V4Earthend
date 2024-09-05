@@ -10,6 +10,7 @@
 #include "TextureManager.h"
 #include "Input/InputController.h"
 #include "StringRepository.h"
+#include "Worker.h"
 
 // Class for holding the pointers to commonly used important game contents
 class CoreManager
@@ -22,6 +23,7 @@ public:
     StringRepository* getStrRepo();
     InputController* getInputController();
     sf::RenderWindow* getWindow();
+    Worker* getWorker();
 
 private:
     CoreManager();
@@ -41,6 +43,9 @@ private:
 
     // Pointer to current window
     sf::RenderWindow* window;
+
+    // Pointer to worker
+    Worker* worker;
 };
 
 #endif

@@ -23,6 +23,7 @@ void FirstRun::init()
 void FirstRun::draw()
 {
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
+    Worker* worker = CoreManager::getInstance().getWorker();
 
     float fps = CoreManager::getInstance().getCore()->fps;
     float speed_delta = speed / fps * 240;
@@ -146,6 +147,8 @@ void FirstRun::draw()
 
         a_state = 1;
         a_clock.restart();
+
+        worker->setAction(Worker::GET_SERVERS);
     }
 
     if(a_state == 1 && a_clock.getElapsedTime().asSeconds() > 1)
@@ -161,8 +164,16 @@ void FirstRun::draw()
     {
         pupil_offset_x_d = 17;
 
-        a_state = 3;
-        a_clock.restart();
+        if(worker->isBusy())
+        {
+            a_state = 1;
+            a_clock.restart();
+        }
+        else
+        {
+            a_state = 3;
+            a_clock.restart();
+        }
     }
 
     if(a_state == 3 && a_clock.getElapsedTime().asSeconds() > 1)

@@ -14,7 +14,8 @@ public:
     enum GameState
     {
         ENTRY = 0,
-        FIRSTRUN = 1
+        FIRSTRUN = 1,
+        INITWORKER = 2
     };
 
     static StateManager& getInstance();
