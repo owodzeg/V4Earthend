@@ -59,7 +59,11 @@ set(ENGINE_FILES
         Engine/Graphics/SpriteWrapper.cpp
         Engine/Menu/FirstRun.cpp
         Engine/Worker.cpp
-        Engine/Worker.h
+        Engine/Dialog/DialogBox.cpp
+        Engine/Dialog/MessageCloud.cpp
+        Engine/Dialog/RoundedRect.cpp
+        Engine/Graphics/PText.cpp
+        Engine/Graphics/RichText.cpp
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} main.cpp)
