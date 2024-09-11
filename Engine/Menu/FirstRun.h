@@ -2,12 +2,16 @@
 #define FIRSTRUN_H
 
 #include <SFML/Graphics.hpp>
+#include "../Dialog/MessageCloud.h"
 
 class FirstRun {
 public:
   sf::CircleShape p_head, p_white, p_pupil;
   sf::RectangleShape p_pupil_closed;
   sf::Clock a_clock;
+  sf::Font font;
+  sf::Text text;
+
   int a_state = 0;
 
   float pon_x_c = 0, pon_y_c = 0;
@@ -29,6 +33,10 @@ public:
   float speed = 0.015;
   float shake = -50;
   bool peck = false;
+
+  float initTime = 1;
+
+  std::vector<MessageCloud> messageclouds;
 
   void init();
   void draw();

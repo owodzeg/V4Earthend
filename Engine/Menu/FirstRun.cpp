@@ -148,19 +148,57 @@ void FirstRun::draw()
         a_state = 1;
         a_clock.restart();
 
-        worker->setAction(Worker::GET_SERVERS);
+        worker->setAction(Worker::INIT_FIRSTRUN);
+
+        speed = 0.025;
+        initTime = 1;
     }
 
-    if(a_state == 1 && a_clock.getElapsedTime().asSeconds() > 1)
+    if(a_state == 1 && a_clock.getElapsedTime().asSeconds() > initTime)
     {
         pupil_offset_x_d = -17;
-        speed = 0.025;
+        speed = 0.025 + (worker->currentDLProgress / (worker->currentDLTotal+1) * 0.175);
+        initTime = 1 - (worker->currentDLProgress / (worker->currentDLTotal+1) * 0.875);
+
+        SPDLOG_INFO("{} {} {}%", speed, initTime, worker->currentDLProgress / worker->currentDLTotal * 100);
 
         a_state = 2;
         a_clock.restart();
     }
 
-    if(a_state == 2 && a_clock.getElapsedTime().asSeconds() > 1)
+    if(a_state == 2 && a_clock.getElapsedTime().asSeconds() > initTime)
+    {
+        pupil_offset_x_d = 17;
+
+        a_state = 3;
+        a_clock.restart();
+    }
+
+    if(a_state == 3 && a_clock.getElapsedTime().asSeconds() > initTime)
+    {
+        pupil_offset_x_d = -17;
+
+        a_state = 4;
+        a_clock.restart();
+    }
+
+    if(a_state == 4 && a_clock.getElapsedTime().asSeconds() > initTime)
+    {
+        pupil_offset_x_d = 17;
+
+        a_state = 5;
+        a_clock.restart();
+    }
+
+    if(a_state == 5 && a_clock.getElapsedTime().asSeconds() > initTime)
+    {
+        pupil_offset_x_d = -17;
+
+        a_state = 6;
+        a_clock.restart();
+    }
+
+    if(a_state == 6 && a_clock.getElapsedTime().asSeconds() > initTime)
     {
         pupil_offset_x_d = 17;
 
@@ -171,56 +209,56 @@ void FirstRun::draw()
         }
         else
         {
-            a_state = 3;
-            a_clock.restart();
+            a_state = 7;
+            CoreManager::getInstance().getCore()->global_font.loadFromMemory(worker->files[0].data(), worker->files[0].size());
+            text.setFont(CoreManager::getInstance().getCore()->global_font);
+            text.setString("Choose your language");
         }
     }
 
-    if(a_state == 3 && a_clock.getElapsedTime().asSeconds() > 1)
-    {
-        pupil_offset_x_d = 0;
-
-        a_state = 4;
-        a_clock.restart();
-    }
-
-    if(a_state == 4 && a_clock.getElapsedTime().asSeconds() > 1)
+    if(a_state == 7)
     {
         speed = 0.005;
 
-        pupil_offset_x_d = 17;
-        pupil_offset_x_c = 17;
+        pupil_offset_x_d = -17;
+        pupil_offset_x_c = -17;
 
         pupil_angle_d = 1400;
 
-        a_state = 5;
+        a_state = 8;
         a_clock.restart();
     }
 
-    if(a_state == 5 && a_clock.getElapsedTime().asSeconds() > 2.5)
+    if(a_state == 8 && a_clock.getElapsedTime().asSeconds() > 2.5)
     {
         pupil_angle_d = pupil_angle_c;
         speed = 0.03;
 
         pupil_offset_x_d = 0;
 
-        a_state = 6;
+        a_state = 9;
         a_clock.restart();
     }
 
-    if(a_state == 6 && a_clock.getElapsedTime().asSeconds() > 1)
+    if(a_state == 9 && a_clock.getElapsedTime().asSeconds() > 1)
     {
         speed = 0.015;
         pupil_angle_d = 0;
         pupil_angle_c = 0;
-        pupil_offset_y_d = -17;
-        pon_y_d = 96;
+        pupil_offset_x_d = -17;
+        pon_x_d = 128;
 
-        a_state = 7;
+        a_state = 10;
         a_clock.restart();
+
+        MessageCloud tmp;
+        tmp.Create(20, sf::Vector2f(pon_x_d+r_head_d, pon_y_d-r_head_d-10), sf::Color(255, 255, 255, 255), false, 3);
+        tmp.msgcloud_ID = 0;
+        tmp.AddDialog("Choose your language", true);
+        messageclouds.push_back(tmp);
     }
 
-    if(a_state == 7 && a_clock.getElapsedTime().asSeconds() > 1.2)
+    if(a_state == 10 && a_clock.getElapsedTime().asSeconds() > 1.2)
     {
         // follow movement
         speed = 0.05;
@@ -233,7 +271,7 @@ void FirstRun::draw()
         auto len = sf::Vector2f(mouse.x - pon.x, mouse.y - pon.y);
         prev_deg = deg;
         deg = atan2(len.y, len.x) * 180 / 3.14159;
-        deg -= 90;
+        //deg -= 90;
 
         if (deg < 0)
             deg += 360;
@@ -258,7 +296,7 @@ void FirstRun::draw()
             {
                 if(!peck)
                 {
-                    a_state = 8;
+                    a_state = 11;
                     shake = -50;
                     a_clock.restart();
                     peck = true;
@@ -268,7 +306,7 @@ void FirstRun::draw()
         }
     }
 
-    if(a_state == 8)
+    if(a_state == 11)
     {
         if(shake < 0)
         {
@@ -280,7 +318,7 @@ void FirstRun::draw()
         if(a_clock.getElapsedTime().asSeconds() >= 1.2)
         {
             peck = false;
-            a_state = 7;
+            a_state = 10;
         }
     }
 
@@ -306,4 +344,23 @@ void FirstRun::draw()
         window->draw(p_pupil);
     else
         window->draw(p_pupil_closed);
+
+    std::vector<int> m_rm;
+
+    for (int i = 0; i < messageclouds.size(); i++)
+    {
+        if (messageclouds[i].firstrender)
+            messageclouds[i].Show();
+
+        messageclouds[i].Draw();
+
+        if ((!messageclouds[i].active) && (messageclouds[i].done))
+            m_rm.push_back(i);
+    }
+
+    for (int i = 0; i < m_rm.size(); i++)
+    {
+        SPDLOG_DEBUG("Erasing MessageCloud id {}", m_rm[i]);
+        messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
+    }
 }
