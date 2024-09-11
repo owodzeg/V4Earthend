@@ -4,8 +4,10 @@
 #include "../CoreManager.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
+#include <mutex>
 
 using namespace std;
+using namespace std::chrono;
 
 InputController::InputController()
 {
@@ -40,27 +42,108 @@ void InputController::LoadKeybinds()
     }
 }
 
+void InputController::addKeyPressMessage(int keyID, bool state)
+{
+    mtx.lock();
+    Input::KeyPressMessage message;
+    message.keyCode = keyID;
+    message.state = state;
+    message.timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+
+    SPDLOG_DEBUG("Added new KeyPressMessage: key {}, state {}, timestamp {}", message.keyCode, message.state, message.timestamp);
+
+    messages.push_back(message);
+    mtx.unlock();
+}
+
+std::vector<Input::KeyPressMessage> InputController::fetchKeyPressMessages()
+{
+    return messages;
+}
+
+void InputController::cleanExpiredMessages()
+{
+    mtx.lock();
+    // cleanup expired messages
+    int messageExpirationTime = 33; // milliseconds. set at 30 fps
+    uint64_t currentTime = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+
+    messages.erase(std::remove_if(messages.begin(), messages.end(), 
+                       [currentTime, messageExpirationTime](Input::KeyPressMessage m) { return m.timestamp + messageExpirationTime < currentTime; }), messages.end());
+    mtx.unlock();
+}
+
+bool InputController::processKeyPressMessages(int keyID)
+{
+    /*std::vector<Input::KeyPressMessage> last_messages = fetchKeyPressMessages();
+    
+    if(last_messages.size() > 0)
+        SPDLOG_DEBUG("Processing {} key press messages", last_messages.size());
+
+    for( auto message : last_messages )
+    {
+        if(message.state)
+        {   
+            keyMap[message.keyCode] = true;
+            keyMapHeld[message.keyCode] = true;
+            keyRegistered = true;
+        }
+        else
+        {
+            keyMap[message.keyCode] = false;
+            keyMapHeld[message.keyCode] = false;
+        }
+    }*/
+
+    cleanExpiredMessages();
+
+    mtx.lock();
+    for( unsigned int i=0; i<messages.size(); i++ )
+    {
+        if(messages[i].keyCode == keyID && messages[i].state)
+        {
+            messages.erase(messages.begin() + i);
+            mtx.unlock();
+            return true;
+        }
+    }
+    mtx.unlock();
+
+    return false;
+}
+
+void InputController::processKeyHolds()
+{
+    mtx.lock();
+    for( unsigned int i=0; i<messages.size(); i++ )
+    {
+        if(messages[i].state)
+        {
+            keyMapHeld[messages[i].keyCode] = true;
+        }
+        else
+        {
+            keyMapHeld[messages[i].keyCode] = false;
+        }
+    }
+    mtx.unlock();
+}
+
 void InputController::parseEvents(sf::Event& event)
 {
     if (event.type == sf::Event::KeyPressed)
     {
-        ///keyMap[event.key.code] = true/false??? would that do the trick?
-        SPDLOG_DEBUG("Key pressed: {}", event.key.code);
-
-        keyRegistered = true;
-        currentKey = event.key.code;
-        keyMap[event.key.code] = true;
-        keyMapHeld[event.key.code] = true;
+        addKeyPressMessage(event.key.code, true);
     }
 
     if (event.type == sf::Event::KeyReleased)
     {
-        SPDLOG_DEBUG("Key released: {}", event.key.code);
-
-        keyMapHeld[event.key.code] = false;
+        addKeyPressMessage(event.key.code, false);
     }
 
     /** Joystick buttons need to be somewhat manually assigned **/
+
+    /* TODO: figure out how to implement it into the new system
 
     if (event.type == sf::Event::JoystickButtonPressed)
     {
@@ -140,6 +223,8 @@ void InputController::parseEvents(sf::Event& event)
             }
         }
     }
+
+    */
 }
 
 int translateKeybind(int keyID)
@@ -154,10 +239,9 @@ int translateKeybind(int keyID)
 ///Returns true if any key has been pressed
 bool InputController::isAnyKeyPressed()
 {
-    bool r = keyRegistered;
-    keyRegistered = false;
+    cleanExpiredMessages();
 
-    return r;
+    return fetchKeyPressMessages().size() > 0;
 }
 
 ///Returns what key is being currently pressed (for input detection)
@@ -216,12 +300,9 @@ bool InputController::isKeyPressed(int keyID, int restrictMode)
                 return false;
             }
         }
-
-        if (keyMap[realKey] == true)
-        {
-            keyMap[realKey] = false;
+        
+        if( processKeyPressMessages(realKey) )
             return true;
-        }
     }
 
     return false;
@@ -229,6 +310,8 @@ bool InputController::isKeyPressed(int keyID, int restrictMode)
 
 bool InputController::isKeyHeld(int keyID, int restrictMode)
 {
+    processKeyHolds();
+
     for (unsigned int i = 0; i < keybinds[keyID].size(); i++)
     {
         int realKey = keybinds[keyID][i];
@@ -260,7 +343,10 @@ bool InputController::isKeyHeld(int keyID, int restrictMode)
 
 void InputController::Flush()
 {
+    mtx.lock();
     keyMap.clear();
+    mtx.unlock();
+
     keyRegistered = false;
     currentKey = -1;
 }

@@ -16,6 +16,7 @@ class SpriteWrapper
 
     SpriteWrapper();
     void load(std::string path);
+    void loadFromMemory(std::string path, std::vector<char>& data);
     void setPosition(sf::Vector2f pos);
     void setPosition(float x, float y);
     sf::Vector2f getPosition();

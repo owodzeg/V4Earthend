@@ -30,6 +30,26 @@ void SpriteWrapper::load(std::string path)
     texture_rect = spr.getTextureRect();
 }
 
+void SpriteWrapper::loadFromMemory(std::string path, std::vector<char>& data)
+{
+    spritePath = path;
+    position = sf::Vector2f(0, 0);
+    origin = sf::Vector2f(0, 0);
+    scale = sf::Vector2f(1, 1);
+    color = sf::Color(255, 255, 255, 255);
+    repeated = false;
+    rotation = 0;
+
+    sf::Image img;
+    img.loadFromMemory(data.data(), data.size());
+
+    ResourceManager::getInstance().loadImageAsSprite(path, img);
+    PSprite& spr = ResourceManager::getInstance().getSprite(path);
+    l_bounds = spr.getLocalBounds();
+    g_bounds = spr.getGlobalBounds();
+    texture_rect = spr.getTextureRect();
+}
+
 void SpriteWrapper::setPosition(sf::Vector2f pos)
 {
     position = pos;
