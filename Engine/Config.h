@@ -60,7 +60,7 @@ public:
                                            "keybindSelect2"};
     std::vector<std::string> configDefaults = {"1280",
                                                "720",
-                                               "1",
+                                               "3",
                                                "240",
                                                "0",
                                                "0",
