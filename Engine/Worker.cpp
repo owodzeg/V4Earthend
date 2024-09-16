@@ -4,6 +4,7 @@
 #include <fstream>
 #include <chrono>
 #include "ResourceManager.h"
+#include "CoreManager.h"
 
 using namespace std::chrono;
 
@@ -168,7 +169,7 @@ std::vector<char> Worker::downloadFromUrl(std::string url, bool addToBuffer)
 
     if(addToBuffer)
     {
-        files.push_back(std::vector<char>(responseString.begin(), responseString.end()));
+        files.push_back(responseString);
     }
 
     return std::vector<char>(responseString.begin(), responseString.end());
@@ -235,7 +236,7 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
 
     if(addToBuffer)
     {
-        files.push_back(std::vector<char>(responseString.begin(), responseString.end()));
+        files.push_back(responseString);
     }
 
     return std::vector<char>(responseString.begin(), responseString.end());
@@ -259,13 +260,65 @@ void Worker::listen()
 
         case INIT_FIRSTRUN: {
             busy = true;
+            currentTaskTotal = 4;
+
             getAvailableServers();
+            currentTaskProgress++;
+
             testConnection();
-            downloadFromUrl(closestServer+"earthend/essentials/p4kakupop-pro.ttf", true);
+            currentTaskProgress++;
+
+            StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
+
+            auto fontfile = downloadFromUrl(closestServer+"earthend/essentials/fonts.txt");
+            std::string fontlist = std::string(fontfile.begin(), fontfile.end());
+            SPDLOG_INFO("Available languages: {}", fontlist);
+            std::vector<std::string> fonts = Func::Split(fontlist,'\n');
+
+            for(auto font : fonts)
+            {
+                std::vector<std::string> param = Func::Split(font, ',');
+                std::string name = param[0];
+                std::string fontf = param[1];
+
+                downloadFromUrl(closestServer+"earthend/essentials/"+fontf, true);
+                strRepo->LoadFontFromString(name, files.back());
+
+            }
+
             auto img_data = downloadFromUrl(closestServer+"earthend/essentials/message.png");
             sf::Image img;
             img.loadFromMemory(img_data.data(), img_data.size());
+            currentTaskProgress++;
+
             ResourceManager::getInstance().loadImageAsSprite("resources/graphics/ui/dialog/message.png", img);
+            // get langs
+            auto langfile = downloadFromUrl(closestServer+"earthend/essentials/languages.txt");
+            std::string langlist = std::string(langfile.begin(), langfile.end());
+            SPDLOG_INFO("Available languages: {}", langlist);
+            std::vector<std::string> langs = Func::Split(langlist,'\n');
+            for(auto lang:langs)
+            {
+                std::vector<std::string> param = Func::Split(lang, ',');
+                std::string code = param[0];
+                std::string name = param[1];
+                std::string font = param[2];
+
+                auto flag_img_data = downloadFromUrl(closestServer+"earthend/essentials/lang/"+code+"/"+code+".png");
+                sf::Image flag_img;
+                flag_img.loadFromMemory(flag_img_data.data(), flag_img_data.size());
+                ResourceManager::getInstance().loadImageAsSprite(code+".png", flag_img);
+
+                auto lang_strings_data = downloadFromUrl(closestServer+"earthend/essentials/lang/"+code+"/"+code+".txt");
+                std::string lang_strings = std::string(lang_strings_data.begin(), lang_strings_data.end());
+                SPDLOG_INFO("Data: {}", lang_strings);
+
+                strRepo->LoadLanguageFromString(code, name, lang_strings);
+                strRepo->langToFontMapping[code] = font;
+            }
+
+            currentTaskProgress++;
+
             worked = true;
             break;
         }

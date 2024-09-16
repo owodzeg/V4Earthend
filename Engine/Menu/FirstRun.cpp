@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include "CoreManager.h"
 #include "FirstRun.h"
+#include "../Func.h"
 
 void FirstRun::init()
 {
@@ -24,6 +25,9 @@ void FirstRun::draw()
 {
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
     Worker* worker = CoreManager::getInstance().getWorker();
+
+    //SPDLOG_INFO("pon_x_c {} pon_x_d {} pon_x_offset_c {} pon_x_offset_d {}", pon_x_c, pon_x_d, pon_x_offset_c, pon_x_offset_d);
+    //SPDLOG_INFO("pon_y_c {} pon_y_d {} pon_y_offset_c {} pon_y_offset_d {}", pon_y_c, pon_y_d, pon_y_offset_c, pon_y_offset_d);
 
     float fps = CoreManager::getInstance().getCore()->fps;
     float speed_delta = speed / fps * 240;
@@ -157,42 +161,10 @@ void FirstRun::draw()
     if(a_state == 1 && a_clock.getElapsedTime().asSeconds() > initTime)
     {
         pupil_offset_x_d = -17;
-        speed = 0.025 + (worker->currentDLProgress / (worker->currentDLTotal+1) * 0.175);
-        initTime = 1 - (worker->currentDLProgress / (worker->currentDLTotal+1) * 0.875);
+        speed = 0.025 + (worker->currentTaskProgress / (worker->currentTaskTotal+1) * 0.175);
+        initTime = 1 - (worker->currentTaskProgress / (worker->currentTaskTotal+1) * 0.875);
 
         SPDLOG_INFO("{} {} {}%", speed, initTime, worker->currentDLProgress / worker->currentDLTotal * 100);
-
-        a_state = 2;
-        a_clock.restart();
-    }
-
-    if(a_state == 2 && a_clock.getElapsedTime().asSeconds() > initTime)
-    {
-        pupil_offset_x_d = 17;
-
-        a_state = 3;
-        a_clock.restart();
-    }
-
-    if(a_state == 3 && a_clock.getElapsedTime().asSeconds() > initTime)
-    {
-        pupil_offset_x_d = -17;
-
-        a_state = 4;
-        a_clock.restart();
-    }
-
-    if(a_state == 4 && a_clock.getElapsedTime().asSeconds() > initTime)
-    {
-        pupil_offset_x_d = 17;
-
-        a_state = 5;
-        a_clock.restart();
-    }
-
-    if(a_state == 5 && a_clock.getElapsedTime().asSeconds() > initTime)
-    {
-        pupil_offset_x_d = -17;
 
         a_state = 6;
         a_clock.restart();
@@ -210,9 +182,6 @@ void FirstRun::draw()
         else
         {
             a_state = 7;
-            CoreManager::getInstance().getCore()->global_font.loadFromMemory(worker->files[0].data(), worker->files[0].size());
-            text.setFont(CoreManager::getInstance().getCore()->global_font);
-            text.setString("Choose your language");
         }
     }
 
@@ -251,10 +220,12 @@ void FirstRun::draw()
         a_state = 10;
         a_clock.restart();
 
+        messageclouds.clear();
+
         MessageCloud tmp;
-        tmp.Create(20, sf::Vector2f(pon_x_d+r_head_d, pon_y_d-r_head_d-10), sf::Color(255, 255, 255, 255), false, 3);
+        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
         tmp.msgcloud_ID = 0;
-        tmp.AddDialog("Choose your language", true);
+        tmp.AddDialog("fr_chooselanguage", true);
         messageclouds.push_back(tmp);
     }
 
@@ -299,6 +270,22 @@ void FirstRun::draw()
                     a_state = 11;
                     shake = -50;
                     a_clock.restart();
+
+                    std::vector<std::string> ouch = {"fr_egg_1", "fr_egg_2", "fr_egg_4"};
+
+                    std::random_device rd;
+                    std::mt19937 g(rd());
+
+                    std::shuffle(ouch.begin(), ouch.end(), g);
+
+                    messageclouds.clear();
+
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog(ouch[0], true);
+                    messageclouds.push_back(tmp);
+
                     peck = true;
                 }
                 SPDLOG_INFO("peck");
@@ -318,6 +305,15 @@ void FirstRun::draw()
         if(a_clock.getElapsedTime().asSeconds() >= 1.2)
         {
             peck = false;
+
+            messageclouds.clear();
+
+            MessageCloud tmp;
+            tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+            tmp.msgcloud_ID = 0;
+            tmp.AddDialog("fr_chooselanguage", true);
+            messageclouds.push_back(tmp);
+
             a_state = 10;
         }
     }
@@ -362,5 +358,59 @@ void FirstRun::draw()
     {
         SPDLOG_DEBUG("Erasing MessageCloud id {}", m_rm[i]);
         messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
+    }
+
+    if(a_state >= 10)
+    {
+        auto langs = CoreManager::getInstance().getStrRepo()->GetAvailableLanguages();
+        int f = 0;
+
+        sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
+        sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
+        mouse = sf::Vector2f(mouse.x*3, mouse.y*3);
+
+        for(auto lang : langs)
+        {
+            auto flag = ResourceManager::getInstance().getSprite(lang.first+".png");
+            int row = floor(f/4);
+            int col = f % 4;
+
+            auto name = Func::ConvertToUtf8String(lang.second);
+
+            flag.setPosition(1400 + col * 600, 100 + row * 400);
+            flag.draw();
+
+            StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
+            auto font = strRepo->GetFontNameForLanguage(lang.first);
+
+            flagnames[lang.first].createText(font, 28, sf::Color(255, 255, 255, 255), "{color 255 255 255}"+name, 3, 1);
+            flagnames[lang.first].setOrigin(flagnames[lang.first].getLocalBounds().width/2, flagnames[lang.first].getLocalBounds().height/2);
+            flagnames[lang.first].setPosition(flag.getPosition().x+150, flag.getPosition().y+240);
+            flagnames[lang.first].draw();
+
+            f++;
+
+            auto pos = flag.getPosition();
+            auto lb = flag.getLocalBounds();
+
+            if((mouse.x > pos.x) && (mouse.x < pos.x + lb.width))
+            {
+                if((mouse.y > pos.y) && (mouse.y < pos.y + lb.height))
+                {
+                    if(CoreManager::getInstance().getStrRepo()->GetCurrentLanguage() != lang.first)
+                    {
+                        CoreManager::getInstance().getStrRepo()->SetCurrentLanguage(lang.first);
+
+                        messageclouds.clear();
+
+                        MessageCloud tmp;
+                        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+                        tmp.msgcloud_ID = 0;
+                        tmp.AddDialog("fr_chooselanguage", true);
+                        messageclouds.push_back(tmp);
+                    }
+                }
+            }
+        }
     }
 }

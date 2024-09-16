@@ -18,13 +18,16 @@ public:
     };
 
     std::vector<File> dl_buffer;
-    std::vector<std::vector<char>> files;
+    std::vector<std::string> files;
 
     bool active = true;
     bool busy = false;
 
     float currentDLTotal = 0;
     float currentDLProgress = 0;
+
+    float currentTaskTotal = 0;
+    float currentTaskProgress = 0;
 
     enum Action
     {

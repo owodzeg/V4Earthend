@@ -10,7 +10,7 @@ public:
   sf::RectangleShape p_pupil_closed;
   sf::Clock a_clock;
   sf::Font font;
-  sf::Text text;
+  PText lang_ptext;
 
   int a_state = 0;
 
@@ -37,6 +37,7 @@ public:
   float initTime = 1;
 
   std::vector<MessageCloud> messageclouds;
+  std::unordered_map<std::string, PText> flagnames;
 
   void init();
   void draw();
