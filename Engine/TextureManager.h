@@ -29,6 +29,7 @@ public:
     void loadTexture(const std::string& path, int quality);
     sf::Texture& getTexture(const std::string& path);
     sf::Texture& getTexture(const std::string& path, int quality, bool downscale = true);
+    sf::Image scaleImage(sf::Image source, int ratio);
     sf::Texture& scaleTexture(const std::string& path, int ratio, bool unload = true);
     bool checkImageExists(const std::string& key);
     void loadImageFromFile(const std::string& path);

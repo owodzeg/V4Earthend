@@ -118,6 +118,56 @@ sf::Texture& TextureManager::getTexture(const std::string& path, int quality, bo
     }
 }
 
+sf::Image TextureManager::scaleImage(sf::Image source, int ratio)
+{
+    SPDLOG_DEBUG("Scaling Image");
+
+    int nwidth = ceil(source.getSize().x / float(ratio));
+    int nheight = ceil(source.getSize().y / float(ratio));
+
+    sf::Image dest;
+    dest.create(nwidth, nheight);
+
+    for (int x=0; x<nwidth; x++)
+    {
+        for (int y=0; y<nheight; y++)
+        {
+            int r=0, g=0, b=0, a=0, final_ratio=0;
+
+            for (int p1 = 0; p1 < ratio; p1++)
+            {
+                for (int p2 = 0; p2 < ratio; p2++)
+                {
+                    if (x * ratio + p1 < source.getSize().x && y * ratio + p2 < source.getSize().y)
+                    {
+                        sf::Color p = source.getPixel(x * ratio + p1, y * ratio + p2);
+                        r += p.r;
+                        g += p.g;
+                        b += p.b;
+                        a += p.a;
+
+                        final_ratio++;
+                    }
+                }
+            }
+
+            if (final_ratio < 1)
+                final_ratio = 1; //prevent division by zero
+
+            final_ratio = ratio * ratio;
+
+            r = r / final_ratio;
+            g = g / final_ratio;
+            b = b / final_ratio;
+            a = a / final_ratio;
+
+            dest.setPixel(x, y, sf::Color(r, g, b, a));
+        }
+    }
+
+    return dest;
+}
+
 sf::Texture& TextureManager::scaleTexture(const std::string& path, int ratio, bool unload)
 {
     if (loadedImages.find(path) != loadedImages.end())
@@ -125,50 +175,7 @@ sf::Texture& TextureManager::scaleTexture(const std::string& path, int ratio, bo
         SPDLOG_DEBUG("Loading source image from {}", path);
         sf::Image source = loadedImages[path];
 
-        int nwidth = ceil(source.getSize().x / float(ratio));
-        int nheight = ceil(source.getSize().y / float(ratio));
-
-        sf::Image dest;
-        dest.create(nwidth, nheight);
-
-        for (int x=0; x<nwidth; x++)
-        {
-            for (int y=0; y<nheight; y++)
-            {
-                int r=0, g=0, b=0, a=0, final_ratio=0;
-
-                for (int p1 = 0; p1 < ratio; p1++)
-                {
-                    for (int p2 = 0; p2 < ratio; p2++)
-                    {
-                        if (x * ratio + p1 < source.getSize().x && y * ratio + p2 < source.getSize().y)
-                        {
-                            sf::Color p = source.getPixel(x * ratio + p1, y * ratio + p2);
-                            r += p.r;
-                            g += p.g;
-                            b += p.b;
-                            a += p.a;
-
-                            final_ratio++;
-                        }
-                    }
-                }
-
-                if (final_ratio < 1)
-                    final_ratio = 1; //prevent division by zero
-
-                final_ratio = ratio * ratio;
-
-                r = r / final_ratio;
-                g = g / final_ratio;
-                b = b / final_ratio;
-                a = a / final_ratio;
-
-                dest.setPixel(x, y, sf::Color(r, g, b, a));
-            }
-        }
-
-        loadedImages[path] = dest;
+        loadedImages[path] = scaleImage(loadedImages[path], ratio);
 
         SPDLOG_DEBUG("Image {} has been downscaled.", path);
         loadTextureFromImage(path);
@@ -256,7 +263,28 @@ void TextureManager::loadImageFromFileWithScale(const std::string& path, int qua
 void TextureManager::loadImageFromMemory(const std::string& key, sf::Image image, bool asTexture)
 {
     std::lock_guard<std::mutex> guard(resource_mutex);
-    SPDLOG_DEBUG("load image {} from memory. asTexture: {}", key, asTexture);
+    SPDLOG_DEBUG("load image {} from memory. asTexture: {}, quality: {}", key, asTexture, CoreManager::getInstance().getConfig()->GetInt("textureQuality"));
+
+    int ratio = 1;
+
+    switch (CoreManager::getInstance().getConfig()->GetInt("textureQuality"))
+    {
+        case 0: {
+            ratio = 6;
+            break;
+        }
+        case 1: {
+            ratio = 3;
+            break;
+        }
+        case 2: {
+            ratio = 2;
+            break;
+        }
+    }
+
+    if(ratio > 1)
+        image = scaleImage(image, ratio);
 
     if (!asTexture)
     {
