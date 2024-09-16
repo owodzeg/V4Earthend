@@ -26,8 +26,6 @@ public:
     // Misc
     bool close_window = false;
 
-    sf::Font global_font;
-
     // Functions
     V4Earthend();
     float getFPS();

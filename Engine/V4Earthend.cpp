@@ -3,6 +3,7 @@
 #include "V4Earthend.h"
 #include "CoreManager.h"
 #include "StateManager.h"
+#include <fstream>
 #include <chrono>
 #include <string>
 
@@ -20,6 +21,8 @@ float V4Earthend::getFPS()
 // Core function that runs the entirety of Patafour
 void V4Earthend::init(std::vector<std::string>& cmd_args)
 {
+    spdlog::set_level(spdlog::level::debug);
+
     if(cmd_args.size() >= 2)
     {
         if(cmd_args[1] == "-log")

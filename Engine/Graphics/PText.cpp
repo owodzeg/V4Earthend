@@ -5,6 +5,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include "../CoreManager.h"
+#include "../Func.h"
 
 using namespace std;
 
@@ -26,8 +27,13 @@ std::vector<std::string> PText::split(std::string const & s, char delim)
 }
 
 
-void PText::createText(sf::Font& font, float characterSize, sf::Color color, sf::String text_string, int q, int r)
+void PText::createText(std::string dst_font, float characterSize, sf::Color color, sf::String text_string, int q, int r)
 {
+    if(isCreated)
+        return;
+
+    font = dst_font;
+
     // TODO: deprecate r = resSetting not needed, everything is planned for 3840x2160
     std::string log_str = text_string.toAnsiString();
     log_str = std::regex_replace(log_str, std::regex("\n"), "\\n");
@@ -49,6 +55,8 @@ void PText::createText(sf::Font& font, float characterSize, sf::Color color, sf:
 
     qualitySetting = q;
     resSetting = 3;
+
+    isCreated = true;
 }
 
 void PText::processRichText()
@@ -93,7 +101,9 @@ void PText::processRichText()
 
     */
 
-    t = sfe::RichText(CoreManager::getInstance().getCore()->global_font);
+    StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
+
+    t = sfe::RichText(strRepo->fontStore[font]);
     t.setCharacterSize(cS);
     t << sf::Color(0,0,0,0);
 
@@ -426,6 +436,12 @@ void PText::setPosition(float x, float y)
     //std::cout << x << " " << y << "  " << lx << " " << ly << std::endl;
 }
 
+void PText::setStringKey(std::string text_key)
+{
+    currentKey = text_key;
+    isset = false;
+}
+
 void PText::setString(std::string text_string)
 {
     // check if text is not the same, otherwise we dont have to process it again
@@ -433,7 +449,6 @@ void PText::setString(std::string text_string)
     {
         txt = sf::String(text_string);
         processRichText();
-        //t.setString(txt);
     }
 }
 
@@ -444,7 +459,6 @@ void PText::setString(sf::String text_string)
     {
         txt = text_string;
         processRichText();
-        //t.setString(txt);
     }
 }
 
@@ -455,7 +469,6 @@ void PText::setString(const char* text_string)
     {
         txt = sf::String(text_string);
         processRichText();
-        //t.setString(txt);
     }
 }
 
@@ -472,7 +485,7 @@ void PText::setScale(float s)
 
 sf::FloatRect PText::getLocalBounds()
 {
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
+    t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
     t.setCharacterSize(cS);
     //t.setFillColor(c);
     //t.setString(txt);
@@ -481,7 +494,7 @@ sf::FloatRect PText::getLocalBounds()
 
 sf::FloatRect PText::getGlobalBounds()
 {
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
+    t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
     t.setCharacterSize(cS);
     //t.setFillColor(c);
     //t.setString(txt);
@@ -515,7 +528,7 @@ sf::FloatRect PText::getGlobalBoundsScaled()
     float nw = 1;
     float nh = 1;
 
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
+    t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
     if (t.getGlobalBounds().width > 0)
         nw = t.getGlobalBounds().width / resRatioX;
 
@@ -526,87 +539,14 @@ sf::FloatRect PText::getGlobalBoundsScaled()
     //return t.getGlobalBounds();
 }
 
-void PText::draw(sf::RenderWindow& window)
+void PText::draw()
 {
-    switch (qualitySetting)
-    {
-        case 0: ///low
-        {
-            ratioX = window.getSize().x / float(640);
-            ratioY = window.getSize().y / float(360);
-            break;
-        }
+    StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
+    sf::RenderWindow* window = CoreManager::getInstance().getWindow();
 
-        case 1: ///med
-        {
-            ratioX = window.getSize().x / float(1280);
-            ratioY = window.getSize().y / float(720);
-            break;
-        }
+    if(currentKey != "")
+        setString(Func::ConvertToUtf8String(strRepo->GetString(currentKey)));
 
-        case 2: ///high
-        {
-            ratioX = window.getSize().x / float(1920);
-            ratioY = window.getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            ratioX = window.getSize().x / float(3840);
-            ratioY = window.getSize().y / float(2160);
-            break;
-        }
-    }
-
-    switch (resSetting)
-    {
-        case 0: ///low
-        {
-            resRatioX = window.getSize().x / float(640);
-            resRatioY = window.getSize().y / float(360);
-            break;
-        }
-
-        case 1: ///med
-        {
-            resRatioX = window.getSize().x / float(1280);
-            resRatioY = window.getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            resRatioX = window.getSize().x / float(1920);
-            resRatioY = window.getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            resRatioX = window.getSize().x / float(3840);
-            resRatioY = window.getSize().y / float(2160);
-            break;
-        }
-    }
-
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
-    //t.setFillColor(c);
-    t.setCharacterSize(cS);
-    //t.setString(txt);
-    t.setScale(resRatioX * scaleX, resRatioY * scaleY);
-    t.setOrigin(orX, orY);
-    t.setPosition(lx * resRatioX, ly * resRatioY);
-    t.setRotation(angle * (180 / 3.14159265358));
-
-    if (rendered)
-        window.draw(t);
-
-    if (!rendered)
-        rendered = true;
-}
-void PText::draw(sf::RenderWindow* window)
-{
     switch (qualitySetting)
     {
         case 0: ///low
@@ -638,38 +578,10 @@ void PText::draw(sf::RenderWindow* window)
         }
     }
 
-    switch (resSetting)
-    {
-        case 0: ///low
-        {
-            resRatioX = window->getSize().x / float(640);
-            resRatioY = window->getSize().y / float(360);
-            break;
-        }
+    resRatioX = window->getSize().x / float(3840);
+    resRatioY = window->getSize().y / float(2160);
 
-        case 1: ///med
-        {
-            resRatioX = window->getSize().x / float(1280);
-            resRatioY = window->getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            resRatioX = window->getSize().x / float(1920);
-            resRatioY = window->getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            resRatioX = window->getSize().x / float(3840);
-            resRatioY = window->getSize().y / float(2160);
-            break;
-        }
-    }
-    
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
+    t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
     //t.setFillColor(c);
     t.setCharacterSize(cS);
     //t.setString(txt);
@@ -688,7 +600,7 @@ void PText::draw(sf::RenderWindow* window)
     {
         int lines = t.getLines().size();
         float alpha = float(fadein_clock.getElapsedTime().asMilliseconds()) / float(fadein_length) * 255.f;
-        
+
         if(alpha < 0)
         alpha = 0;
 
@@ -698,7 +610,7 @@ void PText::draw(sf::RenderWindow* window)
         for(int x=0; x<lines; x++)
         {
             int len = t.getLines()[x].getLength();
-            
+
             for(int y=0; y<len; y++)
             {
                 sf::Color c = t.getCharacterColor(x, y);
@@ -784,156 +696,8 @@ void PText::draw(sf::RenderWindow* window)
         rendered = true;
 }
 
-void PText::update(sf::RenderWindow& window)
-{
-    switch (qualitySetting)
-    {
-        case 0: ///low
-        {
-            ratioX = window.getSize().x / float(640);
-            ratioY = window.getSize().y / float(360);
-            break;
-        }
-
-        case 1: ///med
-        {
-            ratioX = window.getSize().x / float(1280);
-            ratioY = window.getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            ratioX = window.getSize().x / float(1920);
-            ratioY = window.getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            ratioX = window.getSize().x / float(3840);
-            ratioY = window.getSize().y / float(2160);
-            break;
-        }
-    }
-
-    switch (resSetting)
-    {
-        case 0: ///low
-        {
-            resRatioX = window.getSize().x / float(640);
-            resRatioY = window.getSize().y / float(360);
-            break;
-        }
-
-        case 1: ///med
-        {
-            resRatioX = window.getSize().x / float(1280);
-            resRatioY = window.getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            resRatioX = window.getSize().x / float(1920);
-            resRatioY = window.getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            resRatioX = window.getSize().x / float(3840);
-            resRatioY = window.getSize().y / float(2160);
-            break;
-        }
-    }
-
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
-    //t.setFillColor(c);
-    t.setCharacterSize(cS);
-    //t.setString(txt);
-    t.setScale(resRatioX * scaleX, resRatioY * scaleY);
-    t.setOrigin(orX, orY);
-    t.setPosition(lx * resRatioX, ly * resRatioY);
-    t.setRotation(angle * (180 / 3.14159265358));
-}
-
-void PText::update(sf::RenderWindow* window)
-{
-    switch (qualitySetting)
-    {
-        case 0: ///low
-        {
-            ratioX = window->getSize().x / float(640);
-            ratioY = window->getSize().y / float(360);
-            break;
-        }
-
-        case 1: ///med
-        {
-            ratioX = window->getSize().x / float(1280);
-            ratioY = window->getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            ratioX = window->getSize().x / float(1920);
-            ratioY = window->getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            ratioX = window->getSize().x / float(3840);
-            ratioY = window->getSize().y / float(2160);
-            break;
-        }
-    }
-
-    switch (resSetting)
-    {
-        case 0: ///low
-        {
-            resRatioX = window->getSize().x / float(640);
-            resRatioY = window->getSize().y / float(360);
-            break;
-        }
-
-        case 1: ///med
-        {
-            resRatioX = window->getSize().x / float(1280);
-            resRatioY = window->getSize().y / float(720);
-            break;
-        }
-
-        case 2: ///high
-        {
-            resRatioX = window->getSize().x / float(1920);
-            resRatioY = window->getSize().y / float(1080);
-            break;
-        }
-
-        case 3: ///ultra
-        {
-            resRatioX = window->getSize().x / float(3840);
-            resRatioY = window->getSize().y / float(2160);
-            break;
-        }
-    }
-
-    t.setFont(CoreManager::getInstance().getCore()->global_font);
-    //t.setFillColor(c);
-    t.setCharacterSize(cS);
-    //t.setString(txt);
-    t.setScale(resRatioX * scaleX, resRatioY * scaleY);
-    t.setOrigin(orX, orY);
-    t.setPosition(lx * resRatioX, ly * resRatioY);
-    t.setRotation(angle * (180 / 3.14159265358));
-}
-
 sf::Text PText::getText()
 {
-    return sf::Text(sf::String("unknown text"), f, 30);
+    return sf::Text(sf::String("unknown text"), CoreManager::getInstance().getStrRepo()->fontStore[font], 30);
     //return t;
 }

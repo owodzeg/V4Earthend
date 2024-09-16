@@ -3,13 +3,14 @@
 
 #include <SFML/Graphics.hpp>
 #include "RichText.hpp"
+#include <memory>
 
 ///Class for automatic text resizing based on the current window resolution and quality options
 
 class PText
 {
 public:
-    sf::Font f;
+    std::string font; // font name to fetch from strRepo
     //sf::Text t; //legacy purposes
     sfe::RichText t;
 
@@ -29,6 +30,10 @@ public:
 
     bool wide = false;
     bool rendered = false;
+    bool isset = false;
+    bool isCreated = false;
+
+    std::string currentKey;
 
     sf::Clock char_timeout;
     sf::Clock char_wait;
@@ -58,7 +63,7 @@ public:
 
     PText();
     std::vector<std::string> split(std::string const & s, char delim);
-    void createText(sf::Font& font, float characterSize, sf::Color color, sf::String text_string, int q, int r);
+    void createText(std::string dst_font, float characterSize, sf::Color color, sf::String text_string, int q, int r);
     void processRichText();
     void setOrigin(float x, float y);
     sf::Vector2f getScale();
@@ -68,6 +73,7 @@ public:
     void setOutlineColor(sf::Color color);
     void setOutlineThickness(int thick);
     void setPosition(float x, float y);
+    void setStringKey(std::string text_key);
     void setString(std::string text_string);
     void setString(sf::String text_string);
     void setString(const char* text_string);
@@ -78,11 +84,7 @@ public:
     sf::FloatRect getGlobalBoundsScaled();
     sf::FloatRect getTransformedBounds();
     void setScale(float s);
-    void draw(sf::RenderWindow& window);
-    void draw(sf::RenderWindow* window);
-    //rework pending; for removal
-    void update(sf::RenderWindow& window);
-    void update(sf::RenderWindow* window);
+    void draw();
     sf::Text getText();
 };
 

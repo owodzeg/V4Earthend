@@ -13,7 +13,7 @@ PataDialogBox::PataDialogBox()
 {
 }
 
-void PataDialogBox::Create(sf::Font font, sf::String text, std::vector<sf::String> options, int qualitySetting, int type)
+void PataDialogBox::Create(std::string font, sf::String text, std::vector<sf::String> options, int qualitySetting, int type)
 {
     SPDLOG_DEBUG("Creating new PataDialogBox");
 
@@ -108,12 +108,12 @@ void PataDialogBox::Draw()
 
         if (!rendered)
         {
-            t_dialogType.update(window);
-            t_dialogText.update(window);
+            t_dialogType.draw();
+            t_dialogText.draw();
 
             for (unsigned int i = 0; i < t_options.size(); i++)
             {
-                t_options[i].update(window);
+                t_options[i].draw();
             }
 
             rendered = true;
@@ -134,11 +134,11 @@ void PataDialogBox::Draw()
         rr_main.Draw();
 
         t_dialogType.setPosition(x - rr_main.orx + 30, y - rr_main.ory);
-        t_dialogType.draw(window);
+        t_dialogType.draw();
 
         t_dialogText.setOrigin(t_dialogText.getLocalBounds().width / 2, 0);
         t_dialogText.setPosition(x, y - rr_main.ory + t_dialogType.getLocalBounds().height);
-        t_dialogText.draw(window);
+        t_dialogText.draw();
 
         //cout << "stuff: " << rr_main.orx << " " << rr_main.ory << endl;
 
@@ -161,7 +161,7 @@ void PataDialogBox::Draw()
         {
             t_options[i].setOrigin(t_options[i].getLocalBounds().width / 2, 0);
             t_options[i].setPosition(x, y - rr_main.ory + 138 + t_dialogType.getLocalBounds().height + t_dialogText.getLocalBounds().height + (i * 90));
-            t_options[i].draw(window);
+            t_options[i].draw();
         }
     }
 }
