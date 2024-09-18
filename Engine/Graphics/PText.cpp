@@ -26,37 +26,19 @@ std::vector<std::string> PText::split(std::string const & s, char delim)
     return result;
 }
 
-
-void PText::createText(std::string dst_font, float characterSize, sf::Color color, sf::String text_string, int q, int r)
+void PText::setFont(const std::string& dst_font)
 {
-    if(isCreated)
-        return;
-
     font = dst_font;
+}
 
-    // TODO: deprecate r = resSetting not needed, everything is planned for 3840x2160
-    std::string log_str = text_string.toAnsiString();
-    log_str = std::regex_replace(log_str, std::regex("\n"), "\\n");
-    SPDLOG_DEBUG("Creating a new PText object: size: {} text: {} q: {} r: {}", characterSize, log_str, q, 3);
+void PText::setCharacterSize(int newCS)
+{
+    characterSize = newCS*3;
+}
 
-    cS = characterSize*3;
-    c = color;
-    txt = text_string;
-
-    //t.setFont(CoreManager::getInstance().getCore()->global_font);
-    //t.setCharacterSize(cS);
-
-    //t.setFillColor(c);
-    //t.setString(txt);
-
-    //t << sf::Color::White << sfe::Outline{ sf::Color::Black, 2.f } << text_string;
-
-    processRichText();
-
-    qualitySetting = q;
-    resSetting = 3;
-
-    isCreated = true;
+void PText::setTextQuality(int quality)
+{
+    qualitySetting = quality;
 }
 
 void PText::processRichText()
@@ -104,7 +86,7 @@ void PText::processRichText()
     StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
 
     t = sfe::RichText(strRepo->fontStore[font]);
-    t.setCharacterSize(cS);
+    t.setCharacterSize(characterSize);
     t << sf::Color(0,0,0,0);
 
     std::vector<sf::String> rt_string;
@@ -401,9 +383,6 @@ void PText::setRotation(float a)
 
 void PText::setColor(sf::Color color)
 {
-    c = color;
-    //t.setFillColor(color);
-    
     std::vector<sfe::RichText::Line> lines = t.getLines();
     for(int x=0; x<lines.size(); x++)
     {
@@ -411,14 +390,13 @@ void PText::setColor(sf::Color color)
         
         for(int y=0; y<len; y++)
         {
-            t.setCharacterColor(x, y, c);
+            t.setCharacterColor(x, y, color);
         }
     }
 }
 
 void PText::setOutlineColor(sf::Color color)
 {
-    c = color;
     //t.setOutlineColor(color);
 }
 
@@ -438,8 +416,10 @@ void PText::setPosition(float x, float y)
 
 void PText::setStringKey(std::string text_key)
 {
-    currentKey = text_key;
-    isset = false;
+    if(currentKey != text_key)
+    {
+        currentKey = text_key;
+    }
 }
 
 void PText::setString(std::string text_string)
@@ -448,7 +428,6 @@ void PText::setString(std::string text_string)
     if(txt != sf::String(text_string))
     {
         txt = sf::String(text_string);
-        processRichText();
     }
 }
 
@@ -458,7 +437,6 @@ void PText::setString(sf::String text_string)
     if(txt != text_string)
     {
         txt = text_string;
-        processRichText();
     }
 }
 
@@ -468,7 +446,6 @@ void PText::setString(const char* text_string)
     if(txt != sf::String(text_string))
     {
         txt = sf::String(text_string);
-        processRichText();
     }
 }
 
@@ -486,7 +463,7 @@ void PText::setScale(float s)
 sf::FloatRect PText::getLocalBounds()
 {
     t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
-    t.setCharacterSize(cS);
+    t.setCharacterSize(characterSize);
     //t.setFillColor(c);
     //t.setString(txt);
     return t.getLocalBounds();
@@ -495,7 +472,7 @@ sf::FloatRect PText::getLocalBounds()
 sf::FloatRect PText::getGlobalBounds()
 {
     t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
-    t.setCharacterSize(cS);
+    t.setCharacterSize(characterSize);
     //t.setFillColor(c);
     //t.setString(txt);
     return t.getGlobalBounds();
@@ -547,6 +524,11 @@ void PText::draw()
     if(currentKey != "")
         setString(Func::ConvertToUtf8String(strRepo->GetString(currentKey)));
 
+    if(oldtxt != txt || oldKey != currentKey)
+    {
+        processRichText();
+    }
+
     switch (qualitySetting)
     {
         case 0: ///low
@@ -582,9 +564,7 @@ void PText::draw()
     resRatioY = window->getSize().y / float(2160);
 
     t.setFont(CoreManager::getInstance().getStrRepo()->fontStore[font]);
-    //t.setFillColor(c);
-    t.setCharacterSize(cS);
-    //t.setString(txt);
+    t.setCharacterSize(characterSize);
     t.setScale(resRatioX * scaleX, resRatioY * scaleY);
     t.setOrigin(orX, orY);
     t.setPosition(lx * resRatioX, ly * resRatioY);
@@ -694,6 +674,9 @@ void PText::draw()
 
     if (!rendered)
         rendered = true;
+
+    oldtxt = txt;
+    oldKey = currentKey;
 }
 
 sf::Text PText::getText()

@@ -10,15 +10,13 @@
 class PText
 {
 public:
-    std::string font; // font name to fetch from strRepo
-    //sf::Text t; //legacy purposes
-    sfe::RichText t;
+    std::string font = "fallback"; // font name to fetch from strRepo
+    int characterSize = 28*3;
 
+    sfe::RichText t;
     sf::String txt;
 
     int qualitySetting, resSetting=3;
-    float cS = 1;
-    sf::Color c;
 
     float ratioX, ratioY;
     float resRatioX, resRatioY;
@@ -30,10 +28,11 @@ public:
 
     bool wide = false;
     bool rendered = false;
-    bool isset = false;
-    bool isCreated = false;
+
+    sf::String oldtxt = "";
 
     std::string currentKey;
+    std::string oldKey;
 
     sf::Clock char_timeout;
     sf::Clock char_wait;
@@ -63,8 +62,12 @@ public:
 
     PText();
     std::vector<std::string> split(std::string const & s, char delim);
-    void createText(std::string dst_font, float characterSize, sf::Color color, sf::String text_string, int q, int r);
+    void setFont(const std::string& dst_font);
+    void setCharacterSize(int newCS);
+    void setTextQuality(int quality);
     void processRichText();
+
+
     void setOrigin(float x, float y);
     sf::Vector2f getScale();
     void setScale(float x, float y);
@@ -84,6 +87,7 @@ public:
     sf::FloatRect getGlobalBoundsScaled();
     sf::FloatRect getTransformedBounds();
     void setScale(float s);
+
     void draw();
     sf::Text getText();
 };

@@ -383,20 +383,27 @@ void FirstRun::draw()
             StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
             auto font = strRepo->GetFontNameForLanguage(lang.first);
 
-            flagnames[lang.first].createText(font, 28, sf::Color(255, 255, 255, 255), "{color 255 255 255}"+name, 3, 1);
+            flagnames[lang.first].setFont(font);
+            flagnames[lang.first].setTextQuality(3);
+            flagnames[lang.first].setCharacterSize(28);
+            flagnames[lang.first].setString("{color 255 255 255}"+name);
             flagnames[lang.first].setOrigin(flagnames[lang.first].getLocalBounds().width/2, flagnames[lang.first].getLocalBounds().height/2);
             flagnames[lang.first].setPosition(flag.getPosition().x+150, flag.getPosition().y+240);
-            flagnames[lang.first].draw();
 
             f++;
 
             auto pos = flag.getPosition();
             auto lb = flag.getLocalBounds();
 
-            if((mouse.x > pos.x) && (mouse.x < pos.x + lb.width))
+            auto tpos = flagnames[lang.first].getPosition();
+            auto tlb = flagnames[lang.first].getLocalBounds();
+
+            if(a_state != 11)
             {
-                if((mouse.y > pos.y) && (mouse.y < pos.y + lb.height))
+                if(((mouse.x > pos.x) && (mouse.x < pos.x + lb.width) && (mouse.y > pos.y) && (mouse.y < pos.y + lb.height)) || ((mouse.x > tpos.x - tlb.width/2) && (mouse.x < tpos.x + tlb.width/2) && (mouse.y > tpos.y - tlb.height/2) && (mouse.y < tpos.y + tlb.height/2)))
                 {
+                    flagnames[lang.first].setString("{color 255 192 64}"+name);
+
                     if(CoreManager::getInstance().getStrRepo()->GetCurrentLanguage() != lang.first)
                     {
                         CoreManager::getInstance().getStrRepo()->SetCurrentLanguage(lang.first);
@@ -411,6 +418,8 @@ void FirstRun::draw()
                     }
                 }
             }
+
+            flagnames[lang.first].draw();
         }
     }
 }

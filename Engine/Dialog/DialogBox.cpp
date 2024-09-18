@@ -22,20 +22,32 @@ void PataDialogBox::Create(std::string font, sf::String text, std::vector<sf::St
     switch(type)
     {
         case 1: {
-            t_dialogType.createText(font, 16, sf::Color::Red, Func::ConvertToUtf8String(strRepo->GetString("dialog_category1")), qualitySetting, 1);
+            t_dialogType.setFont(font);
+            t_dialogType.setCharacterSize(16);
+            t_dialogType.setTextQuality(qualitySetting);
+            t_dialogType.setStringKey("dialog_category1");
             break;
         }
         case 2: {
-            t_dialogType.createText(font, 16, sf::Color::Red, Func::ConvertToUtf8String(strRepo->GetString("dialog_category2")), qualitySetting, 1);
+            t_dialogType.setFont(font);
+            t_dialogType.setCharacterSize(16);
+            t_dialogType.setTextQuality(qualitySetting);
+            t_dialogType.setStringKey("dialog_category1");
             break;
         }
     }
-    t_dialogText.createText(font, 30, sf::Color::Black, text, qualitySetting, 1);
+    t_dialogText.setFont(font);
+    t_dialogText.setCharacterSize(30);
+    t_dialogText.setTextQuality(qualitySetting);
+    t_dialogText.setString(text);
 
     for (unsigned int i = 0; i < options.size(); i++)
     {
         PText tmp;
-        tmp.createText(font, 22, sf::Color::Black, options[i], qualitySetting, 1);
+        tmp.setFont(font);
+        tmp.setCharacterSize(22);
+        tmp.setTextQuality(qualitySetting);
+        tmp.setString(options[i]);
         t_options.push_back(tmp);
     }
 

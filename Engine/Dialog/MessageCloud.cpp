@@ -46,8 +46,13 @@ void MessageCloud::Create(int speed, sf::Vector2f start_pos, sf::Color color, bo
 
     StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
 
-    dialogue_ptext.createText(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()), 28, sf::Color(32, 32, 32, 255), "", quality, 1);
-    visual_ptext.createText(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()), 28, sf::Color(32, 32, 32, 255), "", quality, 1);
+    dialogue_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
+    dialogue_ptext.setTextQuality(q);
+    dialogue_ptext.setString("");
+
+    visual_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
+    visual_ptext.setTextQuality(q);
+    visual_ptext.setString("");
 
     visual_ptext.force_nonspeech = true;
 
