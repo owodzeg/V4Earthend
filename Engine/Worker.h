@@ -51,6 +51,9 @@ public:
     std::vector<FileEntry> update_files;
     std::vector<FileEntry> downloaded_files;
 
+    std::string cert_file;
+    std::string cert_path;
+
     Worker();
     void platformSpecific();
     void init();

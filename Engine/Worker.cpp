@@ -24,16 +24,13 @@ void Worker::platformSpecific()
 void Worker::platformSpecific()
 {
     platform = "windows";
+
+    cert_file = Func::getTempDirectory()+"\\cacert.pem";
+    cert_path = Func::getTempDirectory();
+
+    SPDLOG_INFO("Cert files: {} {}", cert_path, cert_file);
 }
 #endif
-
-bool replace(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = str.find(from);
-    if(start_pos == std::string::npos)
-        return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
-}
 
 void Worker::init()
 {
@@ -135,6 +132,11 @@ int Worker::testUrl(std::string& url)
         CURLcode res;
 
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        #if defined(_WIN32)
+            curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+            curl_easy_setopt(curl, CURLOPT_CAINFO, cert_file.c_str());
+            curl_easy_setopt(curl, CURLOPT_CAPATH, cert_path.c_str());
+        #endif
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Worker::WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
         curl_easy_perform(curl);
@@ -173,6 +175,11 @@ std::vector<char> Worker::downloadFromUrl(std::string url, bool addToBuffer)
 
             // Set the URL for the HTTPS request
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            #if defined(_WIN32)
+                curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+                curl_easy_setopt(curl, CURLOPT_CAINFO, cert_file.c_str());
+                curl_easy_setopt(curl, CURLOPT_CAPATH, cert_path.c_str());
+            #endif
             curl_easy_setopt(curl, CURLOPT_TRANSFERTEXT, 0L); // Ensure binary mode transfer
             curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L); // Connection timeout
 
@@ -253,6 +260,11 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
 
             // Set the URL for the HTTPS request
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            #if defined(_WIN32)
+                curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+                curl_easy_setopt(curl, CURLOPT_CAINFO, cert_file.c_str());
+                curl_easy_setopt(curl, CURLOPT_CAPATH, cert_path.c_str());
+            #endif
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.c_str());
             curl_easy_setopt(curl, CURLOPT_TRANSFERTEXT, 0L); // Ensure binary mode transfer
             curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L); // Connection timeout
