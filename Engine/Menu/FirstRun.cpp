@@ -462,7 +462,7 @@ void FirstRun::draw()
 
         // don't touch!
         //SPDLOG_DEBUG("mouse {} {}", mouse.x, mouse.y);
-        if(mouse.x > pon_x_c-r_white_c && mouse.x < pon_x_c+r_white_c && mouse.y > pon_y_c-r_white_c && mouse.y < pon_y_c+r_white_c)
+        if(mouse.x > (pon_x_c-r_white_c)*3 && mouse.x < (pon_x_c+r_white_c)*3 && mouse.y > (pon_y_c-r_white_c)*3 && mouse.y < (pon_y_c+r_white_c)*3)
         {
             if(mouseCtrl->getClick(0))
             {
@@ -814,13 +814,22 @@ void FirstRun::draw()
         float sumProg = worker->currentTaskTotal;
         float curProg = 0;
 
-        for(auto x : worker->update_files)
+        for(auto x : worker->downloaded_files)
         {
             curProg += x.progress;
         }
 
         speed = 0.005 + (curProg / (sumProg + 1) * 0.555);
         SPDLOG_INFO("progress: {}", curProg/(sumProg+1));
+
+        auto font = strRepo->GetFontNameForLanguage(selectedLang);
+
+        p_progress.setFont(font);
+        p_progress.setCharacterSize(20);
+        p_progress.setString("{color 255 255 255}"+std::to_string(int(curProg/1024))+"/"+std::to_string(int(sumProg/1024))+" kB");
+        p_progress.setOrigin(p_progress.getLocalBounds().width/2, p_progress.getLocalBounds().height/2);
+        p_progress.setPosition(3840/2, 1400);
+        p_progress.draw();
 
         if(a_clock.getElapsedTime().asMilliseconds() > 1000)
         {
@@ -899,14 +908,12 @@ void FirstRun::draw()
         p_runlauncher.setStringKey("fr_option1");
         p_runlauncher.setColor(sf::Color::White);
         p_runlauncher.setPosition(clicky1.getPosition().x*3+112, clicky1.getPosition().y*3-9);
-        p_runlauncher.draw();
 
         p_shortcut.setFont(font);
         p_shortcut.setCharacterSize(30);
         p_shortcut.setStringKey("fr_option2");
         p_shortcut.setColor(sf::Color::White);
         p_shortcut.setPosition(clicky2.getPosition().x*3+112, clicky2.getPosition().y*3-9);
-        p_shortcut.draw();
 
         b_next.setFont(font);
         b_next.setCharacterSize(50);
@@ -916,6 +923,18 @@ void FirstRun::draw()
 
         if((mouse.x > clicky1.getPosition().x*3) && (mouse.x < clicky1.getPosition().x*3 + 96) && (mouse.y > clicky1.getPosition().y*3) && (mouse.y < clicky1.getPosition().y*3 + 96))
         {
+            p_runlauncher.setColor(sf::Color(255, 192, 64));
+
+            if(mouseCtrl->getClick(0))
+            {
+                opt1 = !opt1;
+            }
+        }
+
+        if((mouse.x > p_runlauncher.getPosition().x) && (mouse.x < p_runlauncher.getPosition().x + p_runlauncher.getLocalBounds().width) && (mouse.y > p_runlauncher.getPosition().y) && (mouse.y < p_runlauncher.getPosition().y + p_runlauncher.getLocalBounds().height))
+        {
+            p_runlauncher.setColor(sf::Color(255, 192, 64));
+
             if(mouseCtrl->getClick(0))
             {
                 opt1 = !opt1;
@@ -924,11 +943,31 @@ void FirstRun::draw()
 
         if((mouse.x > clicky2.getPosition().x*3) && (mouse.x < clicky2.getPosition().x*3 + 96) && (mouse.y > clicky2.getPosition().y*3) && (mouse.y < clicky2.getPosition().y*3 + 96))
         {
+            p_shortcut.setColor(sf::Color(255, 192, 64));
+
             if(mouseCtrl->getClick(0))
             {
                 opt2 = !opt2;
             }
         }
+
+        if((mouse.x > p_shortcut.getPosition().x) && (mouse.x < p_shortcut.getPosition().x + p_shortcut.getLocalBounds().width) && (mouse.y > p_shortcut.getPosition().y) && (mouse.y < p_shortcut.getPosition().y + p_shortcut.getLocalBounds().height))
+        {
+            p_shortcut.setColor(sf::Color(255, 192, 64));
+
+            if(mouseCtrl->getClick(0))
+            {
+                opt2 = !opt2;
+            }
+        }
+
+        if(opt1)
+            p_runlauncher.setColor(sf::Color(0, 192, 0));
+        if(opt2)
+            p_shortcut.setColor(sf::Color(0, 192, 0));
+
+        p_runlauncher.draw();
+        p_shortcut.draw();
 
         auto pos = b_next.getPosition();
         auto lb = b_next.getLocalBounds();

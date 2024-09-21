@@ -113,8 +113,8 @@ int Worker::ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow
 
         if(worker->myAction == Worker::DOWNLOAD_EARTHEND)
         {
-            worker->update_files.back().progress = worker->currentDLProgress;
-            worker->update_files.back().size = worker->currentDLTotal;
+            worker->downloaded_files.back().progress = worker->currentDLProgress;
+            worker->downloaded_files.back().size = worker->currentDLTotal;
         }
         //SPDLOG_INFO("Download Progress: {:.2f}%", progress);
     } else {
@@ -426,6 +426,8 @@ void Worker::listen()
 
             for(auto x : update_files)
             {
+                downloaded_files.push_back(x);
+
                 std::string localPath = std::regex_replace(x.name, std::regex(startDir), "");
                 SPDLOG_INFO("Downloading {}, size {} bytes", localPath, x.size);
 

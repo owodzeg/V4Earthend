@@ -19,6 +19,7 @@ public:
   PText p_path;
   PText p_runlauncher;
   PText p_shortcut;
+  PText p_progress;
 
   sf::RectangleShape clicky1, clicky2;
   bool opt1=false, opt2=false;

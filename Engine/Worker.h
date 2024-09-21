@@ -49,6 +49,7 @@ public:
     };
 
     std::vector<FileEntry> update_files;
+    std::vector<FileEntry> downloaded_files;
 
     Worker();
     void platformSpecific();
