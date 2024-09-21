@@ -9,6 +9,7 @@
 #include "ResourceManager.h"
 #include "TextureManager.h"
 #include "Input/InputController.h"
+#include "Input/MouseController.h"
 #include "StringRepository.h"
 #include "Worker.h"
 
@@ -22,6 +23,7 @@ public:
     Config* getConfig();
     StringRepository* getStrRepo();
     InputController* getInputController();
+    MouseController* getMouseController();
     sf::RenderWindow* getWindow();
     Worker* getWorker();
 
@@ -40,6 +42,9 @@ private:
 
     // Pointer to Input controller
     InputController* inputCtrl;
+
+    // Pointer to Mouse controller
+    MouseController* mouseCtrl;
 
     // Pointer to current window
     sf::RenderWindow* window;

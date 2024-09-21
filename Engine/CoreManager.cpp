@@ -30,6 +30,9 @@ void CoreManager::init()
     // Create InputController before window, because we take events from it
     inputCtrl = new InputController;
 
+    // Create MouseController before window, because we take events from it
+    mouseCtrl = new MouseController;
+
     // Window must be created beforehand so V4Earthend can use it.
     window = new sf::RenderWindow;
 
@@ -62,6 +65,12 @@ StringRepository* CoreManager::getStrRepo()
 InputController* CoreManager::getInputController()
 {
     return inputCtrl;
+}
+
+// Returns a pointer to InputController.
+MouseController* CoreManager::getMouseController()
+{
+    return mouseCtrl;
 }
 
 // Returns a pointer to the window game uses.

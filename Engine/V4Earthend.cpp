@@ -63,6 +63,9 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
     InputController* inputCtrl = CoreManager::getInstance().getInputController();
     inputCtrl->LoadKeybinds();
 
+    // Get Mouse controller
+    MouseController* mouseCtrl = CoreManager::getInstance().getMouseController();
+
     std::ifstream fr("resources/firstrun");
     if(fr.good())
     {
@@ -87,6 +90,7 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
 
             // Forward events to InputController for keyboard and controller usage
             inputCtrl->parseEvents(event);
+            mouseCtrl->parseEvents(event);
         }
 
         // Calculate framerate per second (delta time)
