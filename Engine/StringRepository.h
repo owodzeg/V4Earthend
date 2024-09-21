@@ -23,7 +23,7 @@ public:
     std::vector<std::pair<std::string, std::string>> GetAvailableLanguages() const;
 
     // Font loading and retrieval
-    void LoadFontFromString(const std::string& fontName, const std::string& fontData);
+    void LoadFontFromString(const std::string& fontName, const std::vector<char>& fontData);
     std::string GetFontNameForLanguage(const std::string& countryCode);
     sf::Font& GetFontFromName(const std::string& fontName);
 

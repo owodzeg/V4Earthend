@@ -101,7 +101,7 @@ std::vector<std::pair<std::string, std::string>> StringRepository::GetAvailableL
 }
 
 // Load font from memory (string data)
-void StringRepository::LoadFontFromString(const std::string& fontName, const std::string& fontData)
+void StringRepository::LoadFontFromString(const std::string& fontName, const std::vector<char>& fontData)
 {
     sf::Font font;
     if (!font.loadFromMemory(fontData.data(), fontData.size())) {
