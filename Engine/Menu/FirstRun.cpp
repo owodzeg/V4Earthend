@@ -5,204 +5,6 @@
 #include "FirstRun.h"
 #include "../Func.h"
 
-// Include Native File Dialog for cross-platform directory dialog
-#include <fcntl.h>
-#include <nfd.h>
-
-#if defined(_WIN32)
-    #include <windows.h>
-    #include <shobjidl.h>
-    #include <combaseapi.h>  // for CoInitialize/CoUninitialize
-#elif defined(__linux__)
-    #include <fstream>
-    #include <unistd.h>
-#elif defined(__APPLE__)
-    #include <unistd.h>
-#endif
-
-namespace fs = std::filesystem;
-
-void RunLauncher(const std::string& executablePath, const std::vector<std::string>& args = {}) {
-#if defined(_WIN32)
-    // Windows: Use CreateProcess to run the executable
-    STARTUPINFO startupInfo;
-    PROCESS_INFORMATION processInfo;
-    ZeroMemory(&startupInfo, sizeof(startupInfo));
-    startupInfo.cb = sizeof(startupInfo);
-    ZeroMemory(&processInfo, sizeof(processInfo));
-
-    std::string commandLine = "\"" + executablePath + "\"";
-    for (const auto& arg : args) {
-        commandLine += " \"" + arg + "\"";
-    }
-
-    if (CreateProcess(
-            nullptr,                         // No module name (use command line)
-            commandLine.data(),               // Command line
-            nullptr,                         // Process handle not inheritable
-            nullptr,                         // Thread handle not inheritable
-            FALSE,                           // Set handle inheritance to FALSE
-            CREATE_NO_WINDOW,                // Don't create a window for the new process
-            nullptr,                         // Use parent's environment block
-            nullptr,                         // Use parent's starting directory
-            &startupInfo,                    // Pointer to STARTUPINFO structure
-            &processInfo                     // Pointer to PROCESS_INFORMATION structure
-        )) {
-        // Successfully started the process, now close launcher
-        CloseHandle(processInfo.hProcess);
-        CloseHandle(processInfo.hThread);
-    } else {
-        SPDLOG_ERROR("Failed to start the process: {}", GetLastError());
-    }
-
-#elif defined(__linux__) || defined(__APPLE__)
-    pid_t pid = fork();  // Fork a new process
-    if (pid == -1) {
-        SPDLOG_ERROR("Failed to fork a new process!");
-        return;
-    }
-    if (pid == 0) {  // Child process
-        // Prepare arguments for exec
-        std::vector<char*> execArgs;
-        execArgs.push_back(const_cast<char*>(executablePath.c_str()));
-        for (const auto& arg : args) {
-            execArgs.push_back(const_cast<char*>(arg.c_str()));
-        }
-        execArgs.push_back(nullptr);  // Null-terminate the arguments
-
-        execv(execArgs[0], execArgs.data());  // Replace current process with the new one
-        SPDLOG_ERROR("Failed to exec the process!");
-    } else {
-        // Parent process (launcher)
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Small delay to ensure the child starts
-    }
-#endif
-}
-
-void CreateDesktopShortcut(const std::string& targetPath, const std::string& description) {
-    // Get the Desktop path
-    fs::path desktopPath;
-#if defined(_WIN32)
-    char* userProfile = getenv("USERPROFILE");
-    desktopPath = fs::path(userProfile) / "Desktop";
-#elif defined(__linux__) || defined(__APPLE__)
-    desktopPath = fs::path(getenv("HOME")) / "Desktop";
-#endif
-
-#if defined(_WIN32)
-    // Windows: Create a .lnk file using IShellLink
-    std::wstring shortcutPath = (desktopPath / (description + ".lnk")).wstring();
-    std::wstring targetWPath = std::wstring(targetPath.begin(), targetPath.end());
-
-    CoInitialize(NULL);  // Initialize COM
-    IShellLink* pShellLink = nullptr;
-    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&pShellLink))) {
-        pShellLink->SetPath(targetWPath.c_str());
-        pShellLink->SetDescription(std::wstring(description.begin(), description.end()).c_str());
-
-        IPersistFile* pPersistFile = nullptr;
-        if (SUCCEEDED(pShellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&pPersistFile))) {
-            pPersistFile->Save(shortcutPath.c_str(), TRUE);
-            pPersistFile->Release();
-        }
-        pShellLink->Release();
-    }
-    CoUninitialize();  // Clean up COM
-
-#elif defined(__linux__)
-    // Linux: Create a .desktop file
-    fs::path shortcutPath = desktopPath / (description + ".desktop");
-    std::ofstream desktopFile(shortcutPath);
-    if (desktopFile.is_open()) {
-        desktopFile << "[Desktop Entry]\n";
-        desktopFile << "Version=1.0\n";
-        desktopFile << "Type=Application\n";
-        desktopFile << "Name=" << description << "\n";
-        desktopFile << "Exec=" << targetPath << "\n";
-        desktopFile << "Icon=utilities-terminal\n";  // You can customize this if you have an icon
-        desktopFile << "Terminal=false\n";
-        desktopFile.close();
-
-        // Make the shortcut executable
-        std::string command = "chmod +x " + shortcutPath.string();
-        std::system(command.c_str());
-    } else {
-        SPDLOG_ERROR("Error creating .desktop file");
-    }
-
-#elif defined(__APPLE__)
-    // macOS: Use AppleScript to create an alias on the desktop
-    std::string appleScript =
-        "osascript -e 'tell application \"Finder\" "
-        "to make alias file to POSIX file \"" + targetPath + "\" at POSIX file \"" + desktopPath.string() + "\"'";
-    std::system(appleScript.c_str());
-#endif
-}
-
-std::optional<std::string> getHomeDirectory() {
-    if (const char* home = std::getenv("HOME")) {
-        return std::string(home);
-    }
-#ifdef _WIN32
-    if (const char* homeDrive = std::getenv("HOMEDRIVE")) {
-        if (const char* homePath = std::getenv("HOMEPATH")) {
-            return std::string(homeDrive) + std::string(homePath);
-        }
-    }
-#endif
-    return std::nullopt;
-}
-
-std::string getInstallDirectory(const std::string& gameName) {
-    std::optional<std::string> homeDirOpt = getHomeDirectory();
-    if (!homeDirOpt) {
-        throw std::runtime_error("Unable to determine the home directory.");
-    }
-    std::string homeDir = *homeDirOpt;
-
-#ifdef _WIN32
-    std::string installDir = homeDir + "\\AppData\\Local\\" + gameName;
-#elif __APPLE__
-    std::string installDir = homeDir + "/Library/Application Support/" + gameName;
-#elif __linux__
-    std::string installDir = homeDir + "/.local/share/" + gameName;
-#else
-    throw std::runtime_error("Unsupported platform.");
-#endif
-
-    fs::create_directories(installDir);
-    return installDir;
-}
-
-std::optional<std::string> openDirectoryDialog() {
-    nfdchar_t* outPath = nullptr;
-    nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
-
-    if (result == NFD_OKAY) {
-        std::string selectedPath(outPath);
-        free(outPath);
-        return selectedPath;
-    } else if (result == NFD_CANCEL) {
-        return std::nullopt;
-    } else {
-        return std::nullopt;
-    }
-}
-
-void create_directory(const std::string& path) {
-    std::filesystem::path dir(path);
-
-    try {
-        if (std::filesystem::create_directories(dir)) {
-            SPDLOG_INFO("Directory created: {}", dir.string());
-        } else {
-            SPDLOG_WARN("Directory already exists: {}", dir.string());
-        }
-    } catch (const std::filesystem::filesystem_error& e) {
-        SPDLOG_ERROR("Error creating directory", std::string(e.what()));
-    }
-}
-
 void FirstRun::init()
 {
     p_head.setFillColor(sf::Color::Black);
@@ -719,8 +521,8 @@ void FirstRun::draw()
         a_clock.restart();
         a_state = 15;
 
-        gamePath = getInstallDirectory("Patafour");
-        create_directory(gamePath);
+        gamePath = Func::getInstallDirectory("Patafour");
+        Func::create_directory(gamePath);
     }
 
     if(a_state == 15)
@@ -735,7 +537,7 @@ void FirstRun::draw()
 
             if(mouseCtrl->getClick(0))
             {
-                auto path = openDirectoryDialog();
+                auto path = Func::openDirectoryDialog();
                 if(path)
                 {
                     gamePath = *path;
@@ -1006,13 +808,13 @@ void FirstRun::draw()
             #if defined(_WIN32)
                 CreateDesktopShortcut(gamePath+"/Patafour.exe", "Patafour Launcher");
             #elif defined(__linux__) || defined(__APPLE__)
-                CreateDesktopShortcut(gamePath+"/Patafour", "Patafour Launcher");
+                Func::CreateDesktopShortcut(gamePath+"/Patafour", "Patafour Launcher");
             #endif
         }
 
         if(opt1)
         {
-            RunLauncher(gamePath+"/Patafour", {});
+            Func::RunExecutable(gamePath+"/Patafour", {});
         }
 
         a_state = 22;
