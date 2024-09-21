@@ -39,6 +39,15 @@ public:
     Action myAction;
 
     std::string platform = "windows";
+    std::string gamePath = "";
+
+    struct FileEntry
+    {
+        std::string name = "";
+        int size = 0;
+    };
+
+    std::vector<FileEntry> update_files;
 
     Worker();
     void platformSpecific();

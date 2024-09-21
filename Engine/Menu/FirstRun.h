@@ -11,6 +11,11 @@ public:
   sf::Clock a_clock;
   sf::Font font;
   PText lang_ptext;
+  PText b_next;
+  sf::RectangleShape dir_rect;
+
+  std::string gamePath;
+  PText p_path;
 
   int a_state = 0;
 
@@ -38,6 +43,8 @@ public:
 
   std::vector<MessageCloud> messageclouds;
   std::unordered_map<std::string, PText> flagnames;
+
+  std::string selectedLang = "us";
 
   void init();
   void draw();

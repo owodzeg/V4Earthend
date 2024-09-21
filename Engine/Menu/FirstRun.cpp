@@ -5,6 +5,79 @@
 #include "FirstRun.h"
 #include "../Func.h"
 
+// Include Native File Dialog for cross-platform directory dialog
+#include <fcntl.h>
+#include <nfd.h>
+
+namespace fs = std::filesystem;
+
+// Helper function to get the home directory in a modern way
+std::optional<std::string> getHomeDirectory() {
+    if (const char* home = std::getenv("HOME")) {
+        return std::string(home);
+    }
+#ifdef _WIN32
+    if (const char* homeDrive = std::getenv("HOMEDRIVE")) {
+        if (const char* homePath = std::getenv("HOMEPATH")) {
+            return std::string(homeDrive) + std::string(homePath);
+        }
+    }
+#endif
+    return std::nullopt;
+}
+
+// Function to get the install directory based on the platform
+std::string getInstallDirectory(const std::string& gameName) {
+    std::optional<std::string> homeDirOpt = getHomeDirectory();
+    if (!homeDirOpt) {
+        throw std::runtime_error("Unable to determine the home directory.");
+    }
+    std::string homeDir = *homeDirOpt;
+
+#ifdef _WIN32
+    std::string installDir = homeDir + "\\AppData\\Local\\" + gameName;
+#elif __APPLE__
+    std::string installDir = homeDir + "/Library/Application Support/" + gameName;
+#elif __linux__
+    std::string installDir = homeDir + "/.local/share/" + gameName;
+#else
+    throw std::runtime_error("Unsupported platform.");
+#endif
+
+    fs::create_directories(installDir);  // Create directory if it doesn't exist
+    return installDir;
+}
+
+// Function to show the open directory dialog
+std::optional<std::string> openDirectoryDialog() {
+    nfdchar_t* outPath = nullptr;
+    nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
+
+    if (result == NFD_OKAY) {
+        std::string selectedPath(outPath);
+        free(outPath);  // NFD requires freeing the result
+        return selectedPath;
+    } else if (result == NFD_CANCEL) {
+        return std::nullopt;
+    } else {
+        return std::nullopt;
+    }
+}
+
+void create_directory(const std::string& path) {
+    std::filesystem::path dir(path);
+
+    try {
+        if (std::filesystem::create_directories(dir)) {
+            SPDLOG_INFO("Directory created: {}", dir.string());
+        } else {
+            SPDLOG_WARN("Directory already exists: {}", dir.string());
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        SPDLOG_ERROR("Error creating directory", std::string(e.what()));
+    }
+}
+
 void FirstRun::init()
 {
     p_head.setFillColor(sf::Color::Black);
@@ -360,14 +433,18 @@ void FirstRun::draw()
         messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
     }
 
-    if(a_state >= 10)
+    StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
+
+    if(a_state == 10 || a_state == 11)
     {
-        auto langs = CoreManager::getInstance().getStrRepo()->GetAvailableLanguages();
+        auto langs = strRepo->GetAvailableLanguages();
         int f = 0;
 
         sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
         sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
         mouse = sf::Vector2f(mouse.x*3, mouse.y*3);
+
+        bool hover = false;
 
         for(auto lang : langs)
         {
@@ -380,13 +457,17 @@ void FirstRun::draw()
             flag.setPosition(1400 + col * 600, 100 + row * 400);
             flag.draw();
 
-            StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
             auto font = strRepo->GetFontNameForLanguage(lang.first);
 
             flagnames[lang.first].setFont(font);
             flagnames[lang.first].setTextQuality(3);
             flagnames[lang.first].setCharacterSize(28);
-            flagnames[lang.first].setString("{color 255 255 255}"+name);
+
+            if(lang.first == selectedLang)
+                flagnames[lang.first].setString("{color 0 192 0}"+name);
+            else
+                flagnames[lang.first].setString("{color 255 255 255}"+name);
+
             flagnames[lang.first].setOrigin(flagnames[lang.first].getLocalBounds().width/2, flagnames[lang.first].getLocalBounds().height/2);
             flagnames[lang.first].setPosition(flag.getPosition().x+150, flag.getPosition().y+240);
 
@@ -402,7 +483,14 @@ void FirstRun::draw()
             {
                 if(((mouse.x > pos.x) && (mouse.x < pos.x + lb.width) && (mouse.y > pos.y) && (mouse.y < pos.y + lb.height)) || ((mouse.x > tpos.x - tlb.width/2) && (mouse.x < tpos.x + tlb.width/2) && (mouse.y > tpos.y - tlb.height/2) && (mouse.y < tpos.y + tlb.height/2)))
                 {
+                    hover = true;
+
                     flagnames[lang.first].setString("{color 255 192 64}"+name);
+
+                    if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                    {
+                        selectedLang = lang.first;
+                    }
 
                     if(CoreManager::getInstance().getStrRepo()->GetCurrentLanguage() != lang.first)
                     {
@@ -421,5 +509,195 @@ void FirstRun::draw()
 
             flagnames[lang.first].draw();
         }
+
+        if(!hover)
+        {
+            if(strRepo->GetCurrentLanguage() != selectedLang)
+            {
+                CoreManager::getInstance().getStrRepo()->SetCurrentLanguage(selectedLang);
+
+                messageclouds.clear();
+
+                MessageCloud tmp;
+                tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+                tmp.msgcloud_ID = 0;
+                tmp.AddDialog("fr_chooselanguage", true);
+                messageclouds.push_back(tmp);
+            }
+        }
+
+        auto font = strRepo->GetFontNameForLanguage(selectedLang);
+        b_next.setFont(font);
+        b_next.setCharacterSize(50);
+        b_next.setStringKey("fr_next");
+        b_next.setOrigin(b_next.getLocalBounds().width/2, b_next.getLocalBounds().height/2);
+        b_next.setPosition(2440, 550 + ceil(langs.size()/4) * 400);
+
+        auto pos = b_next.getPosition();
+        auto lb = b_next.getLocalBounds();
+
+        if((mouse.x > pos.x - lb.width/2) && (mouse.x < pos.x + lb.width/2) && (mouse.y > pos.y - lb.height/2) && (mouse.y < pos.y + lb.height/2))
+        {
+            b_next.setColor(sf::Color(0, 192, 0));
+
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            {
+                a_state = 12;
+                a_clock.restart();
+
+                messageclouds.clear();
+            }
+        }
+        else
+        {
+            b_next.setColor(sf::Color::White);
+        }
+
+        b_next.draw();
+    }
+
+    if(a_state == 12)
+    {
+        speed = 0.025;
+
+        pon_x_d = 640;
+        pon_y_d = 300;
+        pupil_offset_x_d = 0;
+        pupil_angle_d = 0;
+
+        if(a_clock.getElapsedTime().asMilliseconds() > 1000)
+        {
+            a_state = 13;
+            a_clock.restart();
+        }
+    }
+
+    if(a_state == 13)
+    {
+        messageclouds.clear();
+
+        MessageCloud tmp;
+        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+        tmp.msgcloud_ID = 0;
+        tmp.AddDialog("fr_welcome1", true);
+        messageclouds.push_back(tmp);
+
+        a_clock.restart();
+        a_state = 14;
+    }
+
+    if(a_state == 14 && a_clock.getElapsedTime().asMilliseconds() >= 2000)
+    {
+        pupil_offset_y_d = -17;
+        messageclouds.clear();
+
+        MessageCloud tmp;
+        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+        tmp.msgcloud_ID = 0;
+        tmp.AddDialog("fr_welcome2", true);
+        messageclouds.push_back(tmp);
+
+        a_clock.restart();
+        a_state = 15;
+
+        gamePath = getInstallDirectory("Patafour");
+        create_directory(gamePath);
+    }
+
+    if(a_state == 15)
+    {
+        dir_rect.setFillColor(sf::Color(96,96,96));
+        dir_rect.setSize(sf::Vector2f(1000, 60));
+        dir_rect.setPosition(140, 400);
+
+        sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
+        sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
+        mouse = sf::Vector2f(mouse.x*3, mouse.y*3);
+
+        if(mouse.x >= 140*3 && mouse.x <= 1140*3 && mouse.y >= 400*3 && mouse.y <= 460*3)
+        {
+            dir_rect.setFillColor(sf::Color(140,140,140));
+
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            {
+                auto path = openDirectoryDialog();
+                if(path)
+                {
+                    gamePath = *path;
+                }
+            }
+        }
+
+        window->draw(dir_rect);
+
+        auto font = strRepo->GetFontNameForLanguage(selectedLang);
+        p_path.setFont(font);
+        p_path.setCharacterSize(30);
+        p_path.setString("{color 255 255 255}"+gamePath);
+        p_path.setPosition(140*3+40, 400*3+26);
+        p_path.draw();
+
+        b_next.setFont(font);
+        b_next.setCharacterSize(50);
+        b_next.setStringKey("fr_finish");
+        b_next.setOrigin(b_next.getLocalBounds().width/2, b_next.getLocalBounds().height/2);
+        b_next.setPosition(3840/2, 1600);
+
+        auto pos = b_next.getPosition();
+        auto lb = b_next.getLocalBounds();
+
+        if((mouse.x > pos.x - lb.width/2) && (mouse.x < pos.x + lb.width/2) && (mouse.y > pos.y - lb.height/2) && (mouse.y < pos.y + lb.height/2))
+        {
+            b_next.setColor(sf::Color(0, 192, 0));
+
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            {
+                speed = 0.025;
+                a_state = 16;
+                a_clock.restart();
+
+                messageclouds.clear();
+            }
+        }
+        else
+        {
+            b_next.setColor(sf::Color::White);
+        }
+
+        b_next.draw();
+    }
+
+    if(a_state == 16)
+    {
+        pon_x_d = 640;
+        pon_y_d = 360;
+
+        if(a_clock.getElapsedTime().asMilliseconds() > 2000)
+        {
+            speed = 0.005;
+
+            a_state = 17;
+            messageclouds.clear();
+
+            MessageCloud tmp;
+            tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+            tmp.msgcloud_ID = 0;
+            tmp.AddDialog("fr_downloading", true);
+            messageclouds.push_back(tmp);
+
+            worker->gamePath = gamePath;
+            worker->setAction(Worker::DOWNLOAD_EARTHEND);
+
+            a_clock.restart();
+        }
+    }
+
+    if(a_state == 17)
+    {
+        pupil_offset_x_d = 17;
+        pupil_offset_x_c = 17;
+        pupil_angle_d += 5 * speed_delta;
+
+        speed = 0.005 + (worker->currentTaskProgress / (worker->currentTaskTotal+1) * 0.555);
     }
 }

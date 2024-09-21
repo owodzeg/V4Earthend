@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <fstream>
 #include <chrono>
+#include <regex>
 #include "ResourceManager.h"
 #include "CoreManager.h"
 
@@ -25,6 +26,13 @@ void Worker::platformSpecific()
 }
 #endif
 
+bool replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if(start_pos == std::string::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
 
 void Worker::init()
 {
@@ -260,7 +268,7 @@ void Worker::listen()
 
         case INIT_FIRSTRUN: {
             busy = true;
-            currentTaskTotal = 4;
+            currentTaskTotal = 20;
 
             getAvailableServers();
             currentTaskProgress++;
@@ -283,7 +291,7 @@ void Worker::listen()
 
                 downloadFromUrl(closestServer+"earthend/essentials/"+fontf, true);
                 strRepo->LoadFontFromString(name, files.back());
-
+                currentTaskProgress += 3;
             }
 
             auto img_data = downloadFromUrl(closestServer+"earthend/essentials/message.png");
@@ -315,6 +323,8 @@ void Worker::listen()
 
                 strRepo->LoadLanguageFromString(code, name, lang_strings);
                 strRepo->langToFontMapping[code] = font;
+
+                currentTaskProgress++;
             }
 
             currentTaskProgress++;
@@ -325,12 +335,52 @@ void Worker::listen()
 
         case DOWNLOAD_EARTHEND: {
             busy = true;
+            currentTaskTotal = 1000;
             auto v = downloadFromUrlPost(closestServer+"getversion.php", {"product_id"}, {"earthend"});
             std::string version = std::string(v.begin(), v.end());
             SPDLOG_INFO("Current Earthend version {}", version);
             auto f = downloadFromUrlPost(closestServer+"getfiles.php",{"product_id", "product_ver", "product_platform"}, {"earthend", version, platform});
             std::string content = std::string(f.begin(), f.end());
             SPDLOG_INFO("Files: {}", content);
+
+            SPDLOG_INFO("Downloading contents to {}", gamePath);
+            auto entryList = Func::Split(content, '\n');
+
+            std::string startDir = "";
+            int totalSize = 0;
+
+            for(auto entry : entryList)
+            {
+                if(entry.find("START_DIR") != std::string::npos)
+                {
+                    startDir = Func::Split(entry, ':')[1];
+                    continue;
+                }
+
+                if(entry.find("TOTAL_SIZE") != std::string::npos)
+                {
+                    totalSize = atoi(Func::Split(entry, ':')[1].c_str());
+                    continue;
+                }
+
+                auto file = Func::Split(entry, ',');
+
+                std::string f_name = file[0];
+                std::string f_hash = file[1];
+                int f_size = atoi(file[2].c_str());
+
+                FileEntry n;
+                n.name = f_name;
+                n.size = f_size;
+                update_files.push_back(n);
+            }
+
+            for(auto x : update_files)
+            {
+                std::string localPath = std::regex_replace(x.name, std::regex(startDir), "");
+                SPDLOG_INFO("Downloading {}, size {} bytes", localPath, x.size);
+            }
+
             worked = true;
             break;
         }
