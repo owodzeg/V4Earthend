@@ -35,13 +35,24 @@ FetchContent_Declare(spdlog
         GIT_TAG v1.11.0)
 FetchContent_MakeAvailable(spdlog)
 
-FetchContent_Declare(curl
-        GIT_REPOSITORY https://github.com/curl/curl.git
-        DOWNLOAD_EXTRACT_TIMESTAMP true
-        OVERRIDE_FIND_PACKAGE
-)
+if(WIN32)
+    include(ExternalProject)
 
-FetchContent_MakeAvailable(curl)
+    ExternalProject_Add(curl
+            GIT_REPOSITORY https://github.com/curl/curl.git
+            GIT_TAG master
+            CMAKE_ARGS -DBUILD_SHARED_LIBS=OFF -DCURL_USE_OPENSSL=ON -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+            INSTALL_COMMAND ""
+    )
+else()
+    FetchContent_Declare(curl
+            GIT_REPOSITORY https://github.com/curl/curl.git
+            DOWNLOAD_EXTRACT_TIMESTAMP true
+            OVERRIDE_FIND_PACKAGE
+    )
+
+    FetchContent_MakeAvailable(curl)
+endif()
 
 find_package(curl)
 

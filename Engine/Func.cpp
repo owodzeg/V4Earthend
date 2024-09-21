@@ -276,8 +276,8 @@ void Func::CreateDesktopShortcut(const std::string& targetPath, const std::strin
     std::wstring targetWPath = std::wstring(targetPath.begin(), targetPath.end());
 
     CoInitialize(NULL);  // Initialize COM
-    IShellLink* pShellLink = nullptr;
-    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&pShellLink))) {
+    IShellLinkW* pShellLink = nullptr;
+    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (LPVOID*)&pShellLink))) {
         pShellLink->SetPath(targetWPath.c_str());
         pShellLink->SetDescription(std::wstring(description.begin(), description.end()).c_str());
 

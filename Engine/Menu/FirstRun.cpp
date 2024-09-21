@@ -806,7 +806,7 @@ void FirstRun::draw()
         if(opt2)
         {
             #if defined(_WIN32)
-                CreateDesktopShortcut(gamePath+"/Patafour.exe", "Patafour Launcher");
+                Func::CreateDesktopShortcut(gamePath+"/Patafour.exe", "Patafour Launcher");
             #elif defined(__linux__) || defined(__APPLE__)
                 Func::CreateDesktopShortcut(gamePath+"/Patafour", "Patafour Launcher");
             #endif
