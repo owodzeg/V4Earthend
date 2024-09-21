@@ -9,9 +9,136 @@
 #include <fcntl.h>
 #include <nfd.h>
 
+#if defined(_WIN32)
+    #include <windows.h>
+    #include <shobjidl.h>
+    #include <combaseapi.h>  // for CoInitialize/CoUninitialize
+#elif defined(__linux__)
+    #include <fstream>
+    #include <unistd.h>
+#elif defined(__APPLE__)
+    #include <unistd.h>
+#endif
+
 namespace fs = std::filesystem;
 
-// Helper function to get the home directory in a modern way
+void RunLauncher(const std::string& executablePath, const std::vector<std::string>& args = {}) {
+#if defined(_WIN32)
+    // Windows: Use CreateProcess to run the executable
+    STARTUPINFO startupInfo;
+    PROCESS_INFORMATION processInfo;
+    ZeroMemory(&startupInfo, sizeof(startupInfo));
+    startupInfo.cb = sizeof(startupInfo);
+    ZeroMemory(&processInfo, sizeof(processInfo));
+
+    std::string commandLine = "\"" + executablePath + "\"";
+    for (const auto& arg : args) {
+        commandLine += " \"" + arg + "\"";
+    }
+
+    if (CreateProcess(
+            nullptr,                         // No module name (use command line)
+            commandLine.data(),               // Command line
+            nullptr,                         // Process handle not inheritable
+            nullptr,                         // Thread handle not inheritable
+            FALSE,                           // Set handle inheritance to FALSE
+            CREATE_NO_WINDOW,                // Don't create a window for the new process
+            nullptr,                         // Use parent's environment block
+            nullptr,                         // Use parent's starting directory
+            &startupInfo,                    // Pointer to STARTUPINFO structure
+            &processInfo                     // Pointer to PROCESS_INFORMATION structure
+        )) {
+        // Successfully started the process, now close launcher
+        CloseHandle(processInfo.hProcess);
+        CloseHandle(processInfo.hThread);
+    } else {
+        SPDLOG_ERROR("Failed to start the process: {}", GetLastError());
+    }
+
+#elif defined(__linux__) || defined(__APPLE__)
+    pid_t pid = fork();  // Fork a new process
+    if (pid == -1) {
+        SPDLOG_ERROR("Failed to fork a new process!");
+        return;
+    }
+    if (pid == 0) {  // Child process
+        // Prepare arguments for exec
+        std::vector<char*> execArgs;
+        execArgs.push_back(const_cast<char*>(executablePath.c_str()));
+        for (const auto& arg : args) {
+            execArgs.push_back(const_cast<char*>(arg.c_str()));
+        }
+        execArgs.push_back(nullptr);  // Null-terminate the arguments
+
+        execv(execArgs[0], execArgs.data());  // Replace current process with the new one
+        SPDLOG_ERROR("Failed to exec the process!");
+    } else {
+        // Parent process (launcher)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Small delay to ensure the child starts
+    }
+#endif
+}
+
+void CreateDesktopShortcut(const std::string& targetPath, const std::string& description) {
+    // Get the Desktop path
+    fs::path desktopPath;
+#if defined(_WIN32)
+    char* userProfile = getenv("USERPROFILE");
+    desktopPath = fs::path(userProfile) / "Desktop";
+#elif defined(__linux__) || defined(__APPLE__)
+    desktopPath = fs::path(getenv("HOME")) / "Desktop";
+#endif
+
+#if defined(_WIN32)
+    // Windows: Create a .lnk file using IShellLink
+    std::wstring shortcutPath = (desktopPath / (description + ".lnk")).wstring();
+    std::wstring targetWPath = std::wstring(targetPath.begin(), targetPath.end());
+
+    CoInitialize(NULL);  // Initialize COM
+    IShellLink* pShellLink = nullptr;
+    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&pShellLink))) {
+        pShellLink->SetPath(targetWPath.c_str());
+        pShellLink->SetDescription(std::wstring(description.begin(), description.end()).c_str());
+
+        IPersistFile* pPersistFile = nullptr;
+        if (SUCCEEDED(pShellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&pPersistFile))) {
+            pPersistFile->Save(shortcutPath.c_str(), TRUE);
+            pPersistFile->Release();
+        }
+        pShellLink->Release();
+    }
+    CoUninitialize();  // Clean up COM
+
+#elif defined(__linux__)
+    // Linux: Create a .desktop file
+    fs::path shortcutPath = desktopPath / (description + ".desktop");
+    std::ofstream desktopFile(shortcutPath);
+    if (desktopFile.is_open()) {
+        desktopFile << "[Desktop Entry]\n";
+        desktopFile << "Version=1.0\n";
+        desktopFile << "Type=Application\n";
+        desktopFile << "Name=" << description << "\n";
+        desktopFile << "Exec=" << targetPath << "\n";
+        desktopFile << "Icon=utilities-terminal\n";  // You can customize this if you have an icon
+        desktopFile << "Terminal=false\n";
+        desktopFile.close();
+
+        // Make the shortcut executable
+        std::string command = "chmod +x " + shortcutPath.string();
+        std::system(command.c_str());
+    } else {
+        SPDLOG_ERROR("Error creating .desktop file");
+    }
+
+#elif defined(__APPLE__)
+    // macOS: Use AppleScript to create an alias on the desktop
+    std::string appleScript =
+        "osascript -e 'tell application \"Finder\" "
+        "to make alias file to POSIX file \"" + targetPath + "\" at POSIX file \"" + desktopPath.string() + "\"'";
+    std::system(appleScript.c_str());
+#endif
+}
+
 std::optional<std::string> getHomeDirectory() {
     if (const char* home = std::getenv("HOME")) {
         return std::string(home);
@@ -26,7 +153,6 @@ std::optional<std::string> getHomeDirectory() {
     return std::nullopt;
 }
 
-// Function to get the install directory based on the platform
 std::string getInstallDirectory(const std::string& gameName) {
     std::optional<std::string> homeDirOpt = getHomeDirectory();
     if (!homeDirOpt) {
@@ -44,18 +170,17 @@ std::string getInstallDirectory(const std::string& gameName) {
     throw std::runtime_error("Unsupported platform.");
 #endif
 
-    fs::create_directories(installDir);  // Create directory if it doesn't exist
+    fs::create_directories(installDir);
     return installDir;
 }
 
-// Function to show the open directory dialog
 std::optional<std::string> openDirectoryDialog() {
     nfdchar_t* outPath = nullptr;
     nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
 
     if (result == NFD_OKAY) {
         std::string selectedPath(outPath);
-        free(outPath);  // NFD requires freeing the result
+        free(outPath);
         return selectedPath;
     } else if (result == NFD_CANCEL) {
         return std::nullopt;
@@ -216,6 +341,9 @@ void FirstRun::draw()
         }
     }
 
+    MouseController* mouseCtrl = CoreManager::getInstance().getMouseController();
+    auto mouse = sf::Vector2i(mouseCtrl->getMousePos().x*3, mouseCtrl->getMousePos().y*3);
+
     if(a_state == 0 && a_clock.getElapsedTime().asSeconds() > 2)
     {
         r_head_d = 62;
@@ -310,9 +438,9 @@ void FirstRun::draw()
         sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
 
         auto pon = window->mapPixelToCoords(sf::Vector2i(pon_x_c, pon_y_c));
-        sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
+        sf::Vector2f mouse2 = window->mapPixelToCoords(mouseo);
 
-        auto len = sf::Vector2f(mouse.x - pon.x, mouse.y - pon.y);
+        auto len = sf::Vector2f(mouse2.x - pon.x, mouse2.y - pon.y);
         prev_deg = deg;
         deg = atan2(len.y, len.x) * 180 / 3.14159;
         //deg -= 90;
@@ -336,7 +464,7 @@ void FirstRun::draw()
         //SPDLOG_DEBUG("mouse {} {}", mouse.x, mouse.y);
         if(mouse.x > pon_x_c-r_white_c && mouse.x < pon_x_c+r_white_c && mouse.y > pon_y_c-r_white_c && mouse.y < pon_y_c+r_white_c)
         {
-            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            if(mouseCtrl->getClick(0))
             {
                 if(!peck)
                 {
@@ -440,10 +568,6 @@ void FirstRun::draw()
         auto langs = strRepo->GetAvailableLanguages();
         int f = 0;
 
-        sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
-        sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
-        mouse = sf::Vector2f(mouse.x*3, mouse.y*3);
-
         bool hover = false;
 
         for(auto lang : langs)
@@ -487,7 +611,7 @@ void FirstRun::draw()
 
                     flagnames[lang.first].setString("{color 255 192 64}"+name);
 
-                    if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                    if(mouseCtrl->getClick(0))
                     {
                         selectedLang = lang.first;
                     }
@@ -540,7 +664,7 @@ void FirstRun::draw()
         {
             b_next.setColor(sf::Color(0, 192, 0));
 
-            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            if(mouseCtrl->getClick(0))
             {
                 a_state = 12;
                 a_clock.restart();
@@ -580,6 +704,7 @@ void FirstRun::draw()
         tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
         tmp.msgcloud_ID = 0;
         tmp.AddDialog("fr_welcome1", true);
+        tmp.AddDialog("fr_welcome2", false);
         messageclouds.push_back(tmp);
 
         a_clock.restart();
@@ -589,13 +714,7 @@ void FirstRun::draw()
     if(a_state == 14 && a_clock.getElapsedTime().asMilliseconds() >= 2000)
     {
         pupil_offset_y_d = -17;
-        messageclouds.clear();
-
-        MessageCloud tmp;
-        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
-        tmp.msgcloud_ID = 0;
-        tmp.AddDialog("fr_welcome2", true);
-        messageclouds.push_back(tmp);
+        messageclouds.back().NextDialog();
 
         a_clock.restart();
         a_state = 15;
@@ -610,15 +729,11 @@ void FirstRun::draw()
         dir_rect.setSize(sf::Vector2f(1000, 60));
         dir_rect.setPosition(140, 400);
 
-        sf::Vector2i mouseo = sf::Mouse::getPosition(*window);
-        sf::Vector2f mouse = window->mapPixelToCoords(mouseo);
-        mouse = sf::Vector2f(mouse.x*3, mouse.y*3);
-
         if(mouse.x >= 140*3 && mouse.x <= 1140*3 && mouse.y >= 400*3 && mouse.y <= 460*3)
         {
             dir_rect.setFillColor(sf::Color(140,140,140));
 
-            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            if(mouseCtrl->getClick(0))
             {
                 auto path = openDirectoryDialog();
                 if(path)
@@ -650,7 +765,7 @@ void FirstRun::draw()
         {
             b_next.setColor(sf::Color(0, 192, 0));
 
-            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            if(mouseCtrl->getClick(0))
             {
                 speed = 0.025;
                 a_state = 16;
@@ -682,7 +797,7 @@ void FirstRun::draw()
             MessageCloud tmp;
             tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
             tmp.msgcloud_ID = 0;
-            tmp.AddDialog("fr_downloading", true);
+            tmp.AddDialog("fr_downloading", false);
             messageclouds.push_back(tmp);
 
             worker->gamePath = gamePath;
@@ -694,10 +809,173 @@ void FirstRun::draw()
 
     if(a_state == 17)
     {
-        pupil_offset_x_d = 17;
-        pupil_offset_x_c = 17;
         pupil_angle_d += 5 * speed_delta;
 
-        speed = 0.005 + (worker->currentTaskProgress / (worker->currentTaskTotal+1) * 0.555);
+        float sumProg = worker->currentTaskTotal;
+        float curProg = 0;
+
+        for(auto x : worker->update_files)
+        {
+            curProg += x.progress;
+        }
+
+        speed = 0.005 + (curProg / (sumProg + 1) * 0.555);
+        SPDLOG_INFO("progress: {}", curProg/(sumProg+1));
+
+        if(a_clock.getElapsedTime().asMilliseconds() > 1000)
+        {
+            if(!worker->isBusy())
+            {
+                a_state = 18;
+            }
+        }
+    }
+
+    if(a_state == 18)
+    {
+        speed = 0;
+        messageclouds.back().NextDialog();
+        a_clock.restart();
+        a_state = 19;
+    }
+
+    if(a_state == 19 && a_clock.getElapsedTime().asMilliseconds() > 1000)
+    {
+        speed = 0.025;
+
+        pupil_offset_x_d = 0;
+        pupil_offset_y_d = 0;
+        pon_y_d = 240;
+
+        messageclouds.clear();
+
+        MessageCloud tmp;
+        tmp.Create(20, sf::Vector2f((pon_x_d+r_head_d)*3, (pon_y_d-r_head_d-10)*3), sf::Color(255, 255, 255, 255), false, 3);
+        tmp.msgcloud_ID = 0;
+        tmp.AddDialog("fr_finished", false);
+        messageclouds.push_back(tmp);
+
+        a_state = 20;
+    }
+
+    if(a_state == 20)
+    {
+        auto font = strRepo->GetFontNameForLanguage(selectedLang);
+
+        p_installedin.setFont(font);
+        p_installedin.setCharacterSize(30);
+        p_installedin.setStringKey("fr_install_location");
+        p_installedin.setColor(sf::Color::White);
+        p_installedin.setPosition(140*3+40, 340*3);
+        p_installedin.draw();
+
+        p_path.setFont(font);
+        p_path.setCharacterSize(30);
+        p_path.setString("{color 255 255 255}"+gamePath);
+        p_path.setPosition(140*3+40, 360*3+26);
+        p_path.draw();
+
+        clicky1.setSize(sf::Vector2f(32, 32));
+        clicky2.setSize(sf::Vector2f(32, 32));
+
+        if(opt1)
+            clicky1.setFillColor(sf::Color(32,32,32));
+        else
+            clicky1.setFillColor(sf::Color(192,192,192));
+
+        if(opt2)
+            clicky2.setFillColor(sf::Color(32,32,32));
+        else
+            clicky2.setFillColor(sf::Color(192,192,192));
+
+        clicky1.setPosition(140, 420);
+        clicky2.setPosition(140, 464);
+
+        window->draw(clicky1);
+        window->draw(clicky2);
+
+        p_runlauncher.setFont(font);
+        p_runlauncher.setCharacterSize(30);
+        p_runlauncher.setStringKey("fr_option1");
+        p_runlauncher.setColor(sf::Color::White);
+        p_runlauncher.setPosition(clicky1.getPosition().x*3+112, clicky1.getPosition().y*3-9);
+        p_runlauncher.draw();
+
+        p_shortcut.setFont(font);
+        p_shortcut.setCharacterSize(30);
+        p_shortcut.setStringKey("fr_option2");
+        p_shortcut.setColor(sf::Color::White);
+        p_shortcut.setPosition(clicky2.getPosition().x*3+112, clicky2.getPosition().y*3-9);
+        p_shortcut.draw();
+
+        b_next.setFont(font);
+        b_next.setCharacterSize(50);
+        b_next.setStringKey("fr_finish");
+        b_next.setOrigin(b_next.getLocalBounds().width/2, b_next.getLocalBounds().height/2);
+        b_next.setPosition(3840/2, 1700);
+
+        if((mouse.x > clicky1.getPosition().x*3) && (mouse.x < clicky1.getPosition().x*3 + 96) && (mouse.y > clicky1.getPosition().y*3) && (mouse.y < clicky1.getPosition().y*3 + 96))
+        {
+            if(mouseCtrl->getClick(0))
+            {
+                opt1 = !opt1;
+            }
+        }
+
+        if((mouse.x > clicky2.getPosition().x*3) && (mouse.x < clicky2.getPosition().x*3 + 96) && (mouse.y > clicky2.getPosition().y*3) && (mouse.y < clicky2.getPosition().y*3 + 96))
+        {
+            if(mouseCtrl->getClick(0))
+            {
+                opt2 = !opt2;
+            }
+        }
+
+        auto pos = b_next.getPosition();
+        auto lb = b_next.getLocalBounds();
+
+        if((mouse.x > pos.x - lb.width/2) && (mouse.x < pos.x + lb.width/2) && (mouse.y > pos.y - lb.height/2) && (mouse.y < pos.y + lb.height/2))
+        {
+            b_next.setColor(sf::Color(0, 192, 0));
+
+            if(mouseCtrl->getClick(0))
+            {
+                speed = 0.025;
+                a_state = 21;
+                a_clock.restart();
+
+                r_head_d = 0;
+                r_white_d = 0;
+                r_pupil_d = 0;
+
+                messageclouds.clear();
+            }
+        }
+        else
+        {
+            b_next.setColor(sf::Color::White);
+        }
+
+        b_next.draw();
+    }
+
+    if(a_state == 21 && a_clock.getElapsedTime().asMilliseconds() > 1500)
+    {
+        CoreManager::getInstance().getCore()->close_window = true;
+
+        if(opt2)
+        {
+            #if defined(_WIN32)
+                CreateDesktopShortcut(gamePath+"/Patafour.exe", "Patafour Launcher");
+            #elif defined(__linux__) || defined(__APPLE__)
+                CreateDesktopShortcut(gamePath+"/Patafour", "Patafour Launcher");
+            #endif
+        }
+
+        if(opt1)
+        {
+            RunLauncher(gamePath+"/Patafour", {});
+        }
+
+        a_state = 22;
     }
 }

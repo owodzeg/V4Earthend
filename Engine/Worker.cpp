@@ -4,6 +4,7 @@
 #include <fstream>
 #include <chrono>
 #include <regex>
+#include <filesystem>
 #include "ResourceManager.h"
 #include "CoreManager.h"
 
@@ -87,11 +88,19 @@ void Worker::testConnection()
     closestServer = times[0].first;
 }
 
-size_t Worker::WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output, int dl_id) {
+// Callback function to write data to std::vector<char>
+size_t Worker::WriteCallback(void* contents, size_t size, size_t nmemb, std::vector<char>* data) {
     size_t totalSize = size * nmemb;
-    output->append((char*)contents, totalSize);
+
+    // Log each byte as it's received
+    char* receivedData = static_cast<char*>(contents);
+
+    // Append the data to the buffer
+    data->insert(data->end(), receivedData, receivedData + totalSize);
+
     return totalSize;
 }
+
 int Worker::ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
     Worker* worker = static_cast<Worker*>(clientp); // Cast clientp to Worker*
 
@@ -101,6 +110,12 @@ int Worker::ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow
         worker->currentDLTotal = dltotal;  // Store dltotal in the member variable
         worker->dl_buffer[worker->dl_buffer.size()-1].progress = worker->currentDLProgress;
         worker->dl_buffer[worker->dl_buffer.size()-1].size = worker->currentDLTotal;
+
+        if(worker->myAction == Worker::DOWNLOAD_EARTHEND)
+        {
+            worker->update_files.back().progress = worker->currentDLProgress;
+            worker->update_files.back().size = worker->currentDLTotal;
+        }
         //SPDLOG_INFO("Download Progress: {:.2f}%", progress);
     } else {
         //SPDLOG_INFO("Download Progress: 0%");
@@ -140,39 +155,54 @@ std::vector<char> Worker::downloadFromUrl(std::string url, bool addToBuffer)
 {
     SPDLOG_INFO("Attempting to download {}", url);
 
-    std::string responseString;
+    std::vector<char> responseString;
     File newFile;
 
     dl_buffer.push_back(newFile);
 
     // Initialize CURL
-    CURL* curl = curl_easy_init();
 
-    if (curl) {
-        CURLcode res;
+    bool passed = false;
 
-        // Set the URL for the HTTPS request
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    while(!passed)
+    {
+        CURL* curl = curl_easy_init();
 
-        // Use a callback function to capture the response data
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Worker::WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
-        // Set progress function
-        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, Worker::ProgressCallback);
-        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
+        if (curl) {
+            CURLcode res;
 
-        // Enable progress meter (since CURLOPT_NOPROGRESS is disabled by default in newer versions)
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+            // Set the URL for the HTTPS request
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_TRANSFERTEXT, 0L); // Ensure binary mode transfer
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L); // Connection timeout
 
-        // Perform the request
-        res = curl_easy_perform(curl);
+            // Use a callback function to capture the response data
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Worker::WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
+            // Set progress function
+            curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, Worker::ProgressCallback);
+            curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
 
-        // Check for errors
-        if (res != CURLE_OK)
-            SPDLOG_ERROR("curl_easy_perform() failed: {}", curl_easy_strerror(res));
+            // Enable progress meter (since CURLOPT_NOPROGRESS is disabled by default in newer versions)
+            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+
+            // Perform the request
+            res = curl_easy_perform(curl);
+
+            // Check for errors
+            if (res != CURLE_OK)
+            {
+                SPDLOG_ERROR("curl_easy_perform() failed: {}", curl_easy_strerror(res));
+                curl_easy_cleanup(curl);
+                SPDLOG_WARN("Trying again...");
+                continue;
+            }
+        }
 
         // Clean up CURL
         curl_easy_cleanup(curl);
+
+        passed = true;
     }
 
     if(addToBuffer)
@@ -180,7 +210,7 @@ std::vector<char> Worker::downloadFromUrl(std::string url, bool addToBuffer)
         files.push_back(responseString);
     }
 
-    return std::vector<char>(responseString.begin(), responseString.end());
+    return responseString;
 }
 
 std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::string> postParams, std::vector<std::string> postValues, bool addToBuffer)
@@ -207,37 +237,53 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
 
     std::string post = postStream.str();
 
-    std::string responseString;
+    std::vector<char> responseString;
     File newFile;
 
     dl_buffer.push_back(newFile);
 
-    if (curl) {
-        CURLcode res;
+    bool passed = false;
 
-        // Set the URL for the HTTPS request
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.c_str());
+    while(!passed)
+    {
+        curl = curl_easy_init();
 
-        // Use a callback function to capture the response data
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Worker::WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
-        // Set progress function
-        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, Worker::ProgressCallback);
-        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
+        if (curl) {
+            CURLcode res;
 
-        // Enable progress meter (since CURLOPT_NOPROGRESS is disabled by default in newer versions)
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+            // Set the URL for the HTTPS request
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.c_str());
+            curl_easy_setopt(curl, CURLOPT_TRANSFERTEXT, 0L); // Ensure binary mode transfer
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L); // Connection timeout
 
-        // Perform the request
-        res = curl_easy_perform(curl);
+            // Use a callback function to capture the response data
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Worker::WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
+            // Set progress function
+            curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, Worker::ProgressCallback);
+            curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
 
-        // Check for errors
-        if (res != CURLE_OK)
-            SPDLOG_ERROR("curl_easy_perform() failed: {}", curl_easy_strerror(res));
+            // Enable progress meter (since CURLOPT_NOPROGRESS is disabled by default in newer versions)
+            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+
+            // Perform the request
+            res = curl_easy_perform(curl);
+
+            // Check for errors
+            if (res != CURLE_OK)
+            {
+                SPDLOG_ERROR("curl_easy_perform() failed: {}", curl_easy_strerror(res));
+                curl_easy_cleanup(curl);
+                SPDLOG_WARN("Trying again...");
+                continue;
+            }
+        }
 
         // Clean up CURL
         curl_easy_cleanup(curl);
+
+        passed = true;
     }
 
     //SPDLOG_INFO("RECEIVED: {}", responseString);
@@ -247,7 +293,7 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
         files.push_back(responseString);
     }
 
-    return std::vector<char>(responseString.begin(), responseString.end());
+    return responseString;
 }
 
 void Worker::setAction(Action action)
@@ -372,13 +418,29 @@ void Worker::listen()
                 FileEntry n;
                 n.name = f_name;
                 n.size = f_size;
+                n.progress = 0;
                 update_files.push_back(n);
             }
+
+            currentTaskTotal = totalSize;
 
             for(auto x : update_files)
             {
                 std::string localPath = std::regex_replace(x.name, std::regex(startDir), "");
                 SPDLOG_INFO("Downloading {}, size {} bytes", localPath, x.size);
+
+                auto fdata = downloadFromUrl(closestServer+x.name);
+                std::filesystem::path lpath(gamePath+"/"+localPath);
+                lpath.remove_filename();
+                if(!lpath.empty())
+                {
+                    SPDLOG_INFO("Creating directory: {}", lpath.string());
+                    std::filesystem::create_directories(lpath);
+                }
+
+                std::ofstream out(gamePath+"/"+localPath, std::ofstream::binary);
+                out.write(fdata.data(), fdata.size());
+                out.close();
             }
 
             worked = true;

@@ -15,7 +15,13 @@ public:
   sf::RectangleShape dir_rect;
 
   std::string gamePath;
+  PText p_installedin;
   PText p_path;
+  PText p_runlauncher;
+  PText p_shortcut;
+
+  sf::RectangleShape clicky1, clicky2;
+  bool opt1=false, opt2=false;
 
   int a_state = 0;
 

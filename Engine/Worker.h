@@ -18,7 +18,7 @@ public:
     };
 
     std::vector<File> dl_buffer;
-    std::vector<std::string> files;
+    std::vector<std::vector<char>> files;
 
     bool active = true;
     bool busy = false;
@@ -45,6 +45,7 @@ public:
     {
         std::string name = "";
         int size = 0;
+        int progress = 0;
     };
 
     std::vector<FileEntry> update_files;
@@ -54,7 +55,7 @@ public:
     void init();
     void getAvailableServers();
     void testConnection();
-    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output, int dl_id);
+    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::vector<char>* data);
     static int ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
     int testUrl(std::string& url);
     std::vector<char> downloadFromUrl(std::string url, bool addToBuffer = false);
