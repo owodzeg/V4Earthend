@@ -24,6 +24,7 @@ public:
 
     // Font loading and retrieval
     void LoadFontFromString(const std::string& fontName, const std::vector<char>& fontData);
+    void LoadFontFromFile(const std::string& fontPath, const std::string& fontName);
     std::string GetFontNameForLanguage(const std::string& countryCode);
     sf::Font& GetFontFromName(const std::string& fontName);
 

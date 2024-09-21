@@ -113,6 +113,19 @@ void StringRepository::LoadFontFromString(const std::string& fontName, const std
     fontStore.emplace(fontName, std::move(font));  // Move the font to avoid copying
     SPDLOG_INFO("Font '{}' loaded successfully", fontName);
 }
+// Load font from memory (string data)
+void StringRepository::LoadFontFromFile(const std::string& fontPath, const std::string& fontName)
+{
+    sf::Font font;
+    if (!font.loadFromFile(fontPath)) {
+        SPDLOG_ERROR("Could not load font '{}'", fontPath);
+        return;
+    }
+
+    // Insert font into the map using emplace or insert
+    fontStore.emplace(fontName, std::move(font));  // Move the font to avoid copying
+    SPDLOG_INFO("Font '{}' loaded successfully", fontName);
+}
 
 std::string StringRepository::GetFontNameForLanguage(const std::string& countryCode)
 {
