@@ -16,6 +16,9 @@ public:
     sfe::RichText t;
     sf::String txt;
 
+    std::string txt_color = "";
+    sf::Color color;
+
     int qualitySetting, resSetting=3;
 
     float ratioX, ratioY;

@@ -31,6 +31,16 @@ void PText::setFont(const std::string& dst_font)
     font = dst_font;
 }
 
+void PText::setColor(sf::Color c)
+{
+    if(color != c)
+    {
+        txt_color = "{color "+to_string(c.r)+" "+to_string(c.g)+" "+to_string(c.b)+"}";
+        color = c;
+        processRichText();
+    }
+}
+
 void PText::setCharacterSize(int newCS)
 {
     characterSize = newCS*3;
@@ -88,6 +98,8 @@ void PText::processRichText()
     t = sfe::RichText(strRepo->fontStore[font]);
     t.setCharacterSize(characterSize);
     t << sf::Color(0,0,0,0);
+    if(txt_color != "")
+        t << color;
 
     std::vector<sf::String> rt_string;
 
@@ -381,6 +393,7 @@ void PText::setRotation(float a)
     angle = a;
 }
 
+/*
 void PText::setColor(sf::Color color)
 {
     std::vector<sfe::RichText::Line> lines = t.getLines();
@@ -394,6 +407,7 @@ void PText::setColor(sf::Color color)
         }
     }
 }
+*/
 
 void PText::setOutlineColor(sf::Color color)
 {
