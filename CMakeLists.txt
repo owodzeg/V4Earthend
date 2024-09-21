@@ -90,6 +90,7 @@ set(ENGINE_FILES
         Engine/Dialog/RoundedRect.cpp
         Engine/Graphics/PText.cpp
         Engine/Graphics/RichText.cpp
+        Engine/Input/MouseController.cpp
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} ${NFD_SRC} main.cpp)
