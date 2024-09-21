@@ -45,6 +45,32 @@ FetchContent_MakeAvailable(curl)
 
 find_package(curl)
 
+FetchContent_Declare(nfd
+        GIT_REPOSITORY https://github.com/mlabbe/nativefiledialog.git
+        GIT_TAG release_116
+)
+
+FetchContent_MakeAvailable(nfd)
+
+# Manually include the nfd header and source files
+# Specify the include directory for nfd.h
+include_directories(${nfd_SOURCE_DIR}/src/include)
+
+# Add nfd source files depending on the platform
+if(WIN32)
+    set(NFD_SRC ${nfd_SOURCE_DIR}/src/nfd_common.c ${nfd_SOURCE_DIR}/src/nfd_win.cpp)
+elseif(APPLE)
+    set(NFD_SRC ${nfd_SOURCE_DIR}/src/nfd_common.c ${nfd_SOURCE_DIR}/src/nfd_cocoa.m)
+elseif(UNIX AND NOT APPLE)
+    set(NFD_SRC ${nfd_SOURCE_DIR}/src/nfd_common.c ${nfd_SOURCE_DIR}/src/nfd_gtk.c)
+    # Find GTK for Linux
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+    include_directories(${GTK3_INCLUDE_DIRS})
+    link_directories(${GTK3_LIBRARY_DIRS})
+    add_definitions(${GTK3_CFLAGS_OTHER})
+endif()
+
 set(ENGINE_FILES
         Engine/V4Earthend.cpp
         Engine/CoreManager.cpp
@@ -66,7 +92,7 @@ set(ENGINE_FILES
         Engine/Graphics/RichText.cpp
 )
 
-add_executable(V4Earthend ${ENGINE_FILES} main.cpp)
+add_executable(V4Earthend ${ENGINE_FILES} ${NFD_SRC} main.cpp)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message("Enabling Unity build for Release build")
@@ -91,6 +117,11 @@ target_link_libraries(V4Earthend PRIVATE
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         CURL::libcurl)
+
+# Link GTK3 for Linux
+if (UNIX AND NOT APPLE)
+    target_link_libraries(V4Earthend PRIVATE ${GTK3_LIBRARIES})
+endif()
 
 if (OS STREQUAL "Linux")
     find_package(X11 REQUIRED)
