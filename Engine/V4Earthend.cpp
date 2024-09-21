@@ -66,9 +66,10 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
     // Get Mouse controller
     MouseController* mouseCtrl = CoreManager::getInstance().getMouseController();
 
-    std::ifstream fr("resources/firstrun");
+    std::ifstream fr("resources/v4_launcher");
     if(fr.good())
     {
+        StateManager::getInstance().initState(StateManager::ENTRY);
         StateManager::getInstance().setState(StateManager::ENTRY);
     }
     else

@@ -84,6 +84,7 @@ set(ENGINE_FILES
         Engine/Graphics/PSprite.cpp
         Engine/Graphics/SpriteWrapper.cpp
         Engine/Menu/FirstRun.cpp
+        Engine/Menu/Entry.cpp
         Engine/Worker.cpp
         Engine/Dialog/DialogBox.cpp
         Engine/Dialog/MessageCloud.cpp
