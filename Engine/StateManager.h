@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Menu/FirstRun.h"
+#include "Menu/Entry.h"
 
 // Class for holding the pointers to commonly used important game contents
 class StateManager
@@ -26,6 +27,7 @@ public:
     int getState();
 
     FirstRun* firstRun;
+    Entry* entry;
 
 private:
     StateManager();

@@ -26,7 +26,7 @@ void StateManager::updateCurrentState()
     switch (currentGameState)
     {
         case ENTRY: {
-
+            entry->draw();
             break;
         }
 
@@ -44,7 +44,12 @@ void StateManager::initState(int state)
     switch (state)
     {
         case ENTRY: {
+            if(entry == nullptr)
+            {
+                entry = new Entry;
+            }
 
+            entry->init();
             break;
         }
 
