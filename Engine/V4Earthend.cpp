@@ -3,8 +3,11 @@
 #include "V4Earthend.h"
 #include "CoreManager.h"
 #include "StateManager.h"
+#include "Cert.h"
+#include "Func.h"
 #include <fstream>
 #include <chrono>
+#include <numeric>
 #include <string>
 
 V4Earthend::V4Earthend()
@@ -78,6 +81,13 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
         StateManager::getInstance().setState(StateManager::FIRSTRUN);
     }
 
+    // Extract curl certificate to temp
+    #if defined(_WIN32)
+        Cert cert;
+        cert.buildCert();
+        cert.certToFile(Func::getTempDirectory() + "/cacert.pem");
+    #endif
+
     // Execute the main game loop
     while (window->isOpen())
     {
@@ -104,7 +114,7 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
         float average = 0.0f;
         if (n != 0)
         {
-            average = accumulate(frame_times.begin(), frame_times.end(), 0.0) / (n - 1);
+            average = std::accumulate(frame_times.begin(), frame_times.end(), 0.0) / (n - 1);
         }
 
         if (fps <= 1)
