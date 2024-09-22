@@ -301,7 +301,7 @@ void FirstRun::draw()
         if(shake < 0)
         {
             shake += 50 / fps;
-            pon_x_offset_d = pow(std::numbers::e, -0.1*shake)*sin(shake);
+            pon_x_offset_d = pow(std::exp(1.0), -0.1*shake)*sin(shake);
 
         }
 
