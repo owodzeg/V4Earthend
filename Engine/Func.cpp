@@ -255,7 +255,7 @@ void Func::RunExecutable(const std::string& executablePath, const std::vector<st
         SPDLOG_ERROR("Failed to exec the process!");
     } else {
         // Parent process (launcher)
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Small delay to ensure the child starts
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));  // Small delay to ensure the child starts
     }
 #endif
 }
