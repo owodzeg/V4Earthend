@@ -484,6 +484,7 @@ void FirstRun::draw()
 
     if(a_state == 12)
     {
+        peck = false;
         speed = 0.025;
 
         pon_x_d = 640;
@@ -723,7 +724,7 @@ void FirstRun::draw()
         b_next.setOrigin(b_next.getLocalBounds().width/2, b_next.getLocalBounds().height/2);
         b_next.setPosition(3840/2, 1700);
 
-        if((mouse.x > clicky1.getPosition().x*3) && (mouse.x < clicky1.getPosition().x*3 + 96) && (mouse.y > clicky1.getPosition().y*3) && (mouse.y < clicky1.getPosition().y*3 + 96))
+        if(((mouse.x > clicky1.getPosition().x*3) && (mouse.x < clicky1.getPosition().x*3 + 96) && (mouse.y > clicky1.getPosition().y*3) && (mouse.y < clicky1.getPosition().y*3 + 96)) || ((mouse.x > p_runlauncher.getPosition().x) && (mouse.x < p_runlauncher.getPosition().x + p_runlauncher.getLocalBounds().width) && (mouse.y > p_runlauncher.getPosition().y) && (mouse.y < p_runlauncher.getPosition().y + p_runlauncher.getLocalBounds().height)))
         {
             p_runlauncher.setColor(sf::Color(255, 192, 64));
 
@@ -733,27 +734,7 @@ void FirstRun::draw()
             }
         }
 
-        if((mouse.x > p_runlauncher.getPosition().x) && (mouse.x < p_runlauncher.getPosition().x + p_runlauncher.getLocalBounds().width) && (mouse.y > p_runlauncher.getPosition().y) && (mouse.y < p_runlauncher.getPosition().y + p_runlauncher.getLocalBounds().height))
-        {
-            p_runlauncher.setColor(sf::Color(255, 192, 64));
-
-            if(mouseCtrl->getClick(0))
-            {
-                opt1 = !opt1;
-            }
-        }
-
-        if((mouse.x > clicky2.getPosition().x*3) && (mouse.x < clicky2.getPosition().x*3 + 96) && (mouse.y > clicky2.getPosition().y*3) && (mouse.y < clicky2.getPosition().y*3 + 96))
-        {
-            p_shortcut.setColor(sf::Color(255, 192, 64));
-
-            if(mouseCtrl->getClick(0))
-            {
-                opt2 = !opt2;
-            }
-        }
-
-        if((mouse.x > p_shortcut.getPosition().x) && (mouse.x < p_shortcut.getPosition().x + p_shortcut.getLocalBounds().width) && (mouse.y > p_shortcut.getPosition().y) && (mouse.y < p_shortcut.getPosition().y + p_shortcut.getLocalBounds().height))
+        if(((mouse.x > clicky2.getPosition().x*3) && (mouse.x < clicky2.getPosition().x*3 + 96) && (mouse.y > clicky2.getPosition().y*3) && (mouse.y < clicky2.getPosition().y*3 + 96)) || ((mouse.x > p_shortcut.getPosition().x) && (mouse.x < p_shortcut.getPosition().x + p_shortcut.getLocalBounds().width) && (mouse.y > p_shortcut.getPosition().y) && (mouse.y < p_shortcut.getPosition().y + p_shortcut.getLocalBounds().height)))
         {
             p_shortcut.setColor(sf::Color(255, 192, 64));
 
