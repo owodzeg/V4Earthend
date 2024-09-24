@@ -37,7 +37,6 @@ void PText::setColor(sf::Color c)
     {
         txt_color = "{color "+to_string(c.r)+" "+to_string(c.g)+" "+to_string(c.b)+"}";
         color = c;
-        processRichText();
     }
 }
 
@@ -538,7 +537,7 @@ void PText::draw()
     if(currentKey != "")
         setString(Func::ConvertToUtf8String(strRepo->GetString(currentKey)));
 
-    if(oldtxt != txt || oldKey != currentKey)
+    if(oldtxt != txt || oldKey != currentKey || oldColor != color)
     {
         processRichText();
     }
@@ -691,6 +690,7 @@ void PText::draw()
 
     oldtxt = txt;
     oldKey = currentKey;
+    oldColor = color;
 }
 
 sf::Text PText::getText()
