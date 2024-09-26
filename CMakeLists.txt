@@ -58,7 +58,7 @@ FetchContent_MakeAvailable(json)
 # get spdlog
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
-        GIT_TAG v1.11.0)
+        GIT_TAG v1.14.1)
 FetchContent_MakeAvailable(spdlog)
 
 # get nfd (for dialogs)
@@ -106,6 +106,8 @@ set(ENGINE_FILES
         Engine/Graphics/RichText.cpp
         Engine/Input/MouseController.cpp
         Engine/Cert.cpp
+        Engine/Mechanics/Background.cpp
+        Engine/Mechanics/Camera.cpp
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} ${NFD_SRC} main.cpp)
