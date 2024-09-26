@@ -88,8 +88,6 @@ void ResourceManager::unloadSprite(const std::string& path)
     if (loadedSprites.find(path) != loadedSprites.end())
     {
         loadedSprites.erase(path);
-
-        int source = loadedSources[path];
         loadedSources.erase(path);
 
         TextureManager::getInstance().unloadImage(path);

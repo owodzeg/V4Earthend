@@ -93,10 +93,6 @@ void MessageCloud::Show()
         dialogue_ptext.draw();
         visual_ptext.draw();
 
-        sf::RenderWindow* window = CoreManager::getInstance().getWindow();
-        float rX = window->getSize().x / float(3840);
-        float rY = window->getSize().y / float(2160);
-
         dest_xsize = visual_ptext.getLocalBounds().width + 210 + (visual_ptext.getLocalBounds().width / 30);
         dest_ysize = visual_ptext.getLocalBounds().height + 210 + (visual_ptext.getLocalBounds().height / 4.5);
 
@@ -138,10 +134,6 @@ void MessageCloud::NextDialog()
 
         dialogue_ptext.draw();
         visual_ptext.draw();
-
-        sf::RenderWindow* window = CoreManager::getInstance().getWindow();
-        float rX = window->getSize().x / float(3840);
-        float rY = window->getSize().y / float(2160);
 
         dest_xsize = visual_ptext.getLocalBounds().width + 210 + (visual_ptext.getLocalBounds().width / 30);
         dest_ysize = visual_ptext.getLocalBounds().height + 210 + (visual_ptext.getLocalBounds().height / 4.5);

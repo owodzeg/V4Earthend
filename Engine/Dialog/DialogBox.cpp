@@ -17,8 +17,6 @@ void PataDialogBox::Create(std::string font, sf::String text, std::vector<sf::St
 {
     SPDLOG_DEBUG("Creating new PataDialogBox");
 
-    StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
-
     switch(type)
     {
         case 1: {

@@ -122,7 +122,6 @@ void PText::processRichText()
 
     SPDLOG_DEBUG("Processing text {}", std::string(txt));
 
-    int br_text = 0;
     int br_open = -1;
     int br_close = -1;
 

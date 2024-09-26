@@ -102,7 +102,6 @@ int Worker::ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow
     Worker* worker = static_cast<Worker*>(clientp); // Cast clientp to Worker*
 
     if (dltotal > 0) {
-        double progress = (double)dlnow / (double)dltotal * 100;
         worker->currentDLProgress = dlnow;      // Store dlnow in the member variable
         worker->currentDLTotal = dltotal;  // Store dltotal in the member variable
         worker->dl_buffer[worker->dl_buffer.size()-1].progress = worker->currentDLProgress;
@@ -129,8 +128,6 @@ int Worker::testUrl(std::string& url)
     CURL* curl = curl_easy_init();
 
     if (curl) {
-        CURLcode res;
-
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         #if defined(_WIN32)
             curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
@@ -231,7 +228,7 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
 
     if(postParams.size() > 0)
     {
-        for(auto i=0; i<postParams.size(); i++)
+        for(ulong i=0; i<postParams.size(); i++)
         {
             SPDLOG_INFO("Post param {} value {}", postParams[i], postValues[i]);
 

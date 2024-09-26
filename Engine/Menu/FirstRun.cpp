@@ -346,7 +346,7 @@ void FirstRun::draw()
 
     std::vector<int> m_rm;
 
-    for (int i = 0; i < messageclouds.size(); i++)
+    for (ulong i = 0; i < messageclouds.size(); i++)
     {
         if (messageclouds[i].firstrender)
             messageclouds[i].Show();
@@ -357,7 +357,7 @@ void FirstRun::draw()
             m_rm.push_back(i);
     }
 
-    for (int i = 0; i < m_rm.size(); i++)
+    for (ulong i = 0; i < m_rm.size(); i++)
     {
         SPDLOG_DEBUG("Erasing MessageCloud id {}", m_rm[i]);
         messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
