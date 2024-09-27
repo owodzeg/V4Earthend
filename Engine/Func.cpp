@@ -68,7 +68,7 @@ std::string Func::wrap_text(std::string input, int box_width, sf::Font& font, in
     std::string temp = "";
     std::vector<std::string> words;
 
-    for (ulong i = 0; i < input.size(); i++)
+    for (unsigned long i = 0; i < input.size(); i++)
     {
         if ((input[i] == ' ') || (input[i] == '\n') || (i == input.size() - 1))
         {
@@ -93,7 +93,7 @@ std::string Func::wrap_text(std::string input, int box_width, sf::Font& font, in
     int wordcount = 0;
     temp = "";
 
-    for (ulong i = 0; i < words.size(); i++)
+    for (unsigned long i = 0; i < words.size(); i++)
     {
         prevtemp = temp;
 
@@ -155,7 +155,7 @@ std::string Func::wrap_text(std::string input, int box_width, sf::Font& font, in
 
                 ///if its just a long ass word
                 ///need to optimize this because it doesnt work correctly for chinese
-                for (ulong e = 0; e < temp.size(); e++)
+                for (unsigned long e = 0; e < temp.size(); e++)
                 {
                     ltemp += temp[e];
 

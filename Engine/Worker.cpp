@@ -230,7 +230,7 @@ std::vector<char> Worker::downloadFromUrlPost(std::string url, std::vector<std::
 
     if(postParams.size() > 0)
     {
-        for(ulong i=0; i<postParams.size(); i++)
+        for(unsigned long i=0; i<postParams.size(); i++)
         {
             SPDLOG_INFO("Post param {} value {}", postParams[i], postValues[i]);
 

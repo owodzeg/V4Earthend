@@ -151,7 +151,7 @@ void AnimatedObject::LoadConfig(const std::string& anim_path)
         SPDLOG_ERROR("A generic exception occured when trying to load PNGAnimation: {}", exception.what());
         throw AnimatedObjectException(exception.what());
     }
-    catch(PNGAnimationException& exception)
+    catch(...)
     {
         SPDLOG_ERROR("An unknown exception occurred.");
         throw AnimatedObjectException("An unknown exception occurred.");

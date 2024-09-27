@@ -16,7 +16,7 @@ Config::Config()
 {
     SPDLOG_INFO("Config initialization");
 
-    for(ulong i=0; i<configDefaults.size(); i++)
+    for(unsigned long i=0; i<configDefaults.size(); i++)
         configMap[configKeys[i]] = configDefaults[i];
 
     SPDLOG_INFO("Config initialization finished");

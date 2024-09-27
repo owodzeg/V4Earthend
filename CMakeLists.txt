@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-
-if(MSVC)
-    # make sure vcpkg target is static
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "Vcpkg target triplet")
-endif()
+set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "Vcpkg target triplet")
 
 project(V4Earthend VERSION 1.1)
 add_definitions(-DPATAFOUR_VERSION="${CMAKE_PROJECT_VERSION}")
