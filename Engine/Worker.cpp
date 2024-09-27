@@ -356,7 +356,7 @@ void Worker::listen()
             img.loadFromMemory(img_data.data(), img_data.size());
             currentTaskProgress++;
 
-            ResourceManager::getInstance().loadImageAsSprite("resources/graphics/ui/dialog/message.png", img);
+            ResourceManager::getInstance().loadImageAsSprite("resources/graphics/ui/message.png", img);
             // get langs
             auto langfile = downloadFromUrl(closestServer+"earthend/essentials/languages.txt");
             std::string langlist = std::string(langfile.begin(), langfile.end());
