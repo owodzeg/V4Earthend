@@ -6,6 +6,7 @@
 #include "../Graphics/PText.h"
 #include "../Mechanics/Background.h"
 #include "../Mechanics/AnimatedObject.h"
+#include "../Dialog/MessageCloud.h"
 
 class Entry {
 public:
@@ -49,6 +50,8 @@ public:
   float cam_placement = 29500;
   AnimatedObject pon_greet, pon_menu1, pon_menu2, pon_menu3;
   int p_active = 0;
+
+  std::vector<MessageCloud> messageclouds;
 
   void init();
   void draw();
