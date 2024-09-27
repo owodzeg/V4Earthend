@@ -61,6 +61,11 @@ FetchContent_Declare(spdlog
         GIT_TAG v1.14.1)
 FetchContent_MakeAvailable(spdlog)
 
+FetchContent_Declare(libzippp
+        GIT_REPOSITORY https://github.com/ctabin/libzippp
+        GIT_TAG libzippp-v7.1-1.10.1)
+FetchContent_MakeAvailable(libzippp)
+
 # get nfd (for dialogs)
 FetchContent_Declare(nfd
         GIT_REPOSITORY https://github.com/mlabbe/nativefiledialog.git
@@ -108,6 +113,9 @@ set(ENGINE_FILES
         Engine/Cert.cpp
         Engine/Mechanics/Background.cpp
         Engine/Mechanics/Camera.cpp
+        Engine/Graphics/PNGAnimation.cpp
+        Engine/Mechanics/AnimatedObject.cpp
+        Engine/Mechanics/Globals.cpp
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} ${NFD_SRC} main.cpp)
@@ -137,7 +145,8 @@ target_link_libraries(V4Earthend PRIVATE
         sfml-network
         nlohmann_json::nlohmann_json
         spdlog::spdlog
-        CURL::libcurl)
+        CURL::libcurl
+        libzippp)
 
 # Link GTK3 for Linux
 if (UNIX AND NOT APPLE)
