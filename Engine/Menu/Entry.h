@@ -5,11 +5,12 @@
 #include "../Graphics/SpriteWrapper.h"
 #include "../Graphics/PText.h"
 #include "../Mechanics/Background.h"
+#include "../Mechanics/AnimatedObject.h"
 
 class Entry {
 public:
   sf::CircleShape p_head, p_white, p_pupil;
-  SpriteWrapper logo;
+  SpriteWrapper logo, sword, pedestal;
 
   float pon_x_c = 0, pon_y_c = 0;
   float pon_x_d = 0, pon_y_d = 0;
@@ -28,14 +29,26 @@ public:
   float logo_x_d = 0, logo_y_d = 0;
 
   float speed = 0.015;
+  float swordOffset = 0;
 
   sf::RectangleShape background;
 
   sf::Clock a_clock;
   int a_state = 0;
 
-  Camera camera;
+  PText p_login,p_register,p_offline;
+  PText p_news_header;
+  PText p_news;
+
+  PText p_play, p_settings, p_exit;
+
+  Camera bg_camera;
+  Camera entry_camera;
   Background bg;
+
+  float cam_placement = 29500;
+  AnimatedObject pon_greet, pon_menu1, pon_menu2, pon_menu3;
+  int p_active = 0;
 
   void init();
   void draw();
