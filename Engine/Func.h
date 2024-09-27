@@ -24,6 +24,7 @@ public:
     static void create_directory(const std::string& path);
     static std::string getTempDirectory();
     static bool replace(std::string& str, const std::string& from, const std::string& to);
+    static void smoothTransition(float& current, float& destination, float& delta);
 
     template<typename T>
     static std::string to_str(const T& t);

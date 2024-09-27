@@ -32,116 +32,16 @@ void FirstRun::draw()
     float fps = CoreManager::getInstance().getCore()->fps;
     float speed_delta = speed / fps * 240;
 
-    if(fabs(r_head_c - r_head_d) > 0)
-    {
-        if(r_head_c > r_head_d)
-        {
-            r_head_c -= fabs(r_head_c - r_head_d) * speed_delta;
-        }
-        else
-        {
-            r_head_c += fabs(r_head_c - r_head_d) * speed_delta;
-        }
-    }
-    if(fabs(r_white_c - r_white_d) > 0)
-    {
-        if(r_white_c > r_white_d)
-        {
-            r_white_c -= fabs(r_white_c - r_white_d) * speed_delta;
-        }
-        else
-        {
-            r_white_c += fabs(r_white_c - r_white_d) * speed_delta;
-        }
-    }
-    if(fabs(r_pupil_c - r_pupil_d) > 0)
-    {
-        if(r_pupil_c > r_pupil_d)
-        {
-            r_pupil_c -= fabs(r_pupil_c - r_pupil_d) * speed_delta;
-        }
-        else
-        {
-            r_pupil_c += fabs(r_pupil_c - r_pupil_d) * speed_delta;
-        }
-    }
-    if(fabs(pupil_offset_x_c - pupil_offset_x_d) > 0)
-    {
-        if(pupil_offset_x_c > pupil_offset_x_d)
-        {
-            pupil_offset_x_c -= fabs(pupil_offset_x_c - pupil_offset_x_d) * speed_delta;
-        }
-        else
-        {
-            pupil_offset_x_c += fabs(pupil_offset_x_c - pupil_offset_x_d) * speed_delta;
-        }
-    }
-    if(fabs(pupil_offset_y_c - pupil_offset_y_d) > 0)
-    {
-        if(pupil_offset_y_c > pupil_offset_y_d)
-        {
-            pupil_offset_y_c -= fabs(pupil_offset_y_c - pupil_offset_y_d) * speed_delta;
-        }
-        else
-        {
-            pupil_offset_y_c += fabs(pupil_offset_y_c - pupil_offset_y_d) * speed_delta;
-        }
-    }
-    if(fabs(pupil_angle_c - pupil_angle_d) > 0)
-    {
-        if(pupil_angle_c > pupil_angle_d)
-        {
-            pupil_angle_c -= fabs(pupil_angle_c - pupil_angle_d) * speed_delta;
-        }
-        else
-        {
-            pupil_angle_c += fabs(pupil_angle_c - pupil_angle_d) * speed_delta;
-        }
-    }
-    if(fabs(pon_x_c - pon_x_d) > 0)
-    {
-        if(pon_x_c > pon_x_d)
-        {
-            pon_x_c -= fabs(pon_x_c - pon_x_d) * speed_delta;
-        }
-        else
-        {
-            pon_x_c += fabs(pon_x_c - pon_x_d) * speed_delta;
-        }
-    }
-    if(fabs(pon_y_c - pon_y_d) > 0)
-    {
-        if(pon_y_c > pon_y_d)
-        {
-            pon_y_c -= fabs(pon_y_c - pon_y_d) * speed_delta;
-        }
-        else
-        {
-            pon_y_c += fabs(pon_y_c - pon_y_d) * speed_delta;
-        }
-    }
-    if(fabs(pon_y_offset_c - pon_y_offset_d) > 0)
-    {
-        if(pon_y_offset_c > pon_y_offset_d)
-        {
-            pon_y_offset_c -= fabs(pon_y_offset_c - pon_y_offset_d) * speed_delta;
-        }
-        else
-        {
-            pon_y_offset_c += fabs(pon_y_offset_c - pon_y_offset_d) * speed_delta;
-        }
-    }
-    if(fabs(pon_x_offset_c - pon_x_offset_d) > 0)
-    {
-        if(pon_x_offset_c > pon_x_offset_d)
-        {
-            pon_x_offset_c -= fabs(pon_x_offset_c - pon_x_offset_d) * speed_delta;
-        }
-        else
-        {
-            pon_x_offset_c += fabs(pon_x_offset_c - pon_x_offset_d) * speed_delta;
-        }
-    }
+    Func::smoothTransition(r_head_c, r_head_d, speed_delta);
+    Func::smoothTransition(r_white_c, r_white_d, speed_delta);
+    Func::smoothTransition(r_pupil_c, r_pupil_d, speed_delta);
+    Func::smoothTransition(pupil_offset_x_c, pupil_offset_x_d, speed_delta);
+    Func::smoothTransition(pupil_offset_y_c, pupil_offset_y_d, speed_delta);
+    Func::smoothTransition(pupil_angle_c, pupil_angle_d, speed_delta);
+    Func::smoothTransition(pon_x_c, pon_x_d, speed_delta);
+    Func::smoothTransition(pon_y_c, pon_y_d, speed_delta);
+    Func::smoothTransition(pon_y_offset_c, pon_y_offset_d, speed_delta);
+    Func::smoothTransition(pon_x_offset_c, pon_x_offset_d, speed_delta);
 
     MouseController* mouseCtrl = CoreManager::getInstance().getMouseController();
     auto mouse = sf::Vector2i(mouseCtrl->getMousePos().x*3, mouseCtrl->getMousePos().y*3);

@@ -409,3 +409,18 @@ bool Func::replace(std::string& str, const std::string& from, const std::string&
     str.replace(start_pos, from.length(), to);
     return true;
 }
+
+void Func::smoothTransition(float& current, float& destination, float& delta)
+{
+    if(fabs(current - destination) > 0)
+    {
+        if(current > destination)
+        {
+            current -= fabs(current - destination) * delta;
+        }
+        else
+        {
+            current += fabs(current - destination) * delta;
+        }
+    }
+}
