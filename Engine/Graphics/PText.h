@@ -17,6 +17,8 @@ public:
     sf::String txt;
 
     std::string txt_color = "";
+
+    bool forceColor = false;
     sf::Color color, oldColor;
 
     int qualitySetting, resSetting=3;

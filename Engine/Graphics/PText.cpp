@@ -37,6 +37,8 @@ void PText::setColor(sf::Color c)
     {
         txt_color = "{color "+to_string(c.r)+" "+to_string(c.g)+" "+to_string(c.b)+"}";
         color = c;
+
+        forceColor = true;
     }
 }
 
@@ -573,6 +575,25 @@ void PText::draw()
     if(oldtxt != txt || oldKey != currentKey || oldColor != color)
     {
         processRichText();
+    }
+
+    if(forceColor)
+    {
+        int lines = t.getLines().size();
+
+        for(int x=0; x<lines; x++)
+        {
+            int len = t.getLines()[x].getLength();
+
+            for(int y=0; y<len; y++)
+            {
+                sf::Color c = t.getCharacterColor(x, y);
+                c.r = color.r;
+                c.g = color.g;
+                c.b = color.b;
+                t.setCharacterColor(x, y, c);
+            }
+        }
     }
 
     switch (qualitySetting)
