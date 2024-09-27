@@ -69,7 +69,20 @@ void Entry::init()
     logo_x_c = logo_x_d;
     logo_y_c = logo_y_d;
 
-    bg.Load("earthend");
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+    std::tm* localTime = std::localtime(&currentTime);
+
+    if(localTime->tm_hour >= 5 && localTime->tm_hour <= 9)
+        bg.Load("earthend_1");
+    if(localTime->tm_hour >= 10 && localTime->tm_hour <= 16)
+        bg.Load("earthend_2");
+    if(localTime->tm_hour >= 17 && localTime->tm_hour <= 19)
+        bg.Load("earthend_3");
+    if(localTime->tm_hour >= 20 && localTime->tm_hour <= 22)
+        bg.Load("earthend_4");
+    if(localTime->tm_hour >= 23 || localTime->tm_hour <= 4)
+        bg.Load("earthend_5");
 
     a_clock.restart();
 
