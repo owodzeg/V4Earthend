@@ -129,7 +129,7 @@ void Background::Draw(Camera& camera)
         float camPos = camera.camera_x + camera.zoom_x + camera.manual_x + camera.debug_x;
         float xPos = (camPos/resRatioX - 3840) - (camPos * bg_object.x_speed * pataSpeed) - 99999;
 
-        bg_object.texture.setTextureRect(sf::IntRect(0,0,999999, 2160));
+        bg_object.texture.setTextureRect(sf::IntRect(0,0,999999, bg_object.texture.getGlobalBounds().height));
         bg_object.texture.setRepeated(true);
         bg_object.texture.setOrigin(0, bg_object.texture.getGlobalBounds().height);
         bg_object.texture.setColor(bg_object.color);
