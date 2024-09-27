@@ -11,6 +11,7 @@
 #include "Input/InputController.h"
 #include "Input/MouseController.h"
 #include "StringRepository.h"
+#include "Mechanics/Globals.h"
 #include "Worker.h"
 
 // Class for holding the pointers to commonly used important game contents
@@ -25,6 +26,7 @@ public:
     InputController* getInputController();
     MouseController* getMouseController();
     sf::RenderWindow* getWindow();
+    Globals* getGlobals();
     Worker* getWorker();
 
 private:
@@ -48,6 +50,9 @@ private:
 
     // Pointer to current window
     sf::RenderWindow* window;
+
+    // Pointer to globals
+    Globals* globals;
 
     // Pointer to worker
     Worker* worker;

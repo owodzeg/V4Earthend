@@ -39,6 +39,9 @@ void CoreManager::init()
     // After we created prerequisities for V4Earthend, we can safely create it.
     core = new V4Earthend;
 
+    // Initialize the globals set
+    globals = new Globals;
+
     // Worker for all updater needs
     worker = new Worker;
 }
@@ -77,6 +80,12 @@ MouseController* CoreManager::getMouseController()
 sf::RenderWindow* CoreManager::getWindow()
 {
     return window;
+}
+
+// Returns a pointer to the worker.
+Globals* CoreManager::getGlobals()
+{
+    return globals;
 }
 
 // Returns a pointer to the worker.
