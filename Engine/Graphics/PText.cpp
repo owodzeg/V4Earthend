@@ -327,6 +327,40 @@ void PText::processRichText()
                         return;
                     }
                 }
+                else if(args[0] == "global")
+                {
+                    if(args.size()-1 == 1)
+                    {
+                        int key = atoi(args[1].c_str());
+                        std::string out = "";
+
+                        auto globals = CoreManager::getInstance().getGlobals();
+
+                        if(globals->getType(key) == typeid(int))
+                        {
+                            out = to_string(globals->get<int>(key));
+                        } else if(globals->getType(key) == typeid(float))
+                        {
+                            out = to_string(globals->get<float>(key));
+                        } else if(globals->getType(key) == typeid(double))
+                        {
+                            out = to_string(globals->get<double>(key));
+                        } else if(globals->getType(key) == typeid(std::string))
+                        {
+                            out = globals->get<std::string>(key);
+                        } else
+                        {
+                            SPDLOG_WARN("Unknown type spotted when trying to process global {}", key);
+                        }
+
+                        t << out;
+                    }
+                    else
+                    {
+                        SPDLOG_ERROR("Something went wrong while processing the string. Invalid number of arguments for keyword 'global'");
+                        return;
+                    }
+                }
                 else
                 {
                     SPDLOG_ERROR("Something went wrong while processing the string. Unknown keyword found: {}", args[0]);
