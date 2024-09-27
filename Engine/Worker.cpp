@@ -1,14 +1,16 @@
 #include "Worker.h"
-#include "Func.h"
-#include <spdlog/spdlog.h>
-#include <fstream>
-#include <chrono>
-#include <regex>
-#include <filesystem>
-#include "ResourceManager.h"
 #include "CoreManager.h"
+#include "Func.h"
+#include "ResourceManager.h"
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <regex>
+#include <libzippp.h>
+#include <spdlog/spdlog.h>
 
 using namespace std::chrono;
+using namespace libzippp;
 
 Worker::Worker()
 {
@@ -391,10 +393,10 @@ void Worker::listen()
         case DOWNLOAD_EARTHEND: {
             busy = true;
             currentTaskTotal = 1000;
-            auto v = downloadFromUrlPost(closestServer+"getversion.php", {"product_id"}, {"earthend"});
+            auto v = downloadFromUrlPost(closestServer+"getversion_new.php", {"product_id", "product_branch"}, {"earthend", "main"});
             std::string version = std::string(v.begin(), v.end());
             SPDLOG_INFO("Current Earthend version {}", version);
-            auto f = downloadFromUrlPost(closestServer+"getfiles.php",{"product_id", "product_ver", "product_platform"}, {"earthend", version, platform});
+            auto f = downloadFromUrlPost(closestServer+"getfiles_new.php",{"product_id", "product_ver", "product_platform", "product_branch"}, {"earthend", version, platform, "main"});
             std::string content = std::string(f.begin(), f.end());
             SPDLOG_INFO("Files: {}", content);
 
@@ -438,21 +440,66 @@ void Worker::listen()
                 downloaded_files.push_back(x);
 
                 std::string localPath = std::regex_replace(x.name, std::regex(startDir), "");
-                SPDLOG_INFO("Downloading {}, size {} bytes", localPath, x.size);
+                SPDLOG_INFO("Downloading {} ({}), size {} bytes", localPath, x.name, x.size);
 
-                auto fdata = downloadFromUrl(closestServer+x.name);
-                std::filesystem::path lpath(gamePath+"/"+localPath);
-                lpath.remove_filename();
-                if(!lpath.empty())
+                if(localPath == "package.zip")
                 {
-                    SPDLOG_INFO("Creating directory: {}", lpath.string());
-                    std::filesystem::create_directories(lpath);
-                }
+                    auto fdata = downloadFromUrl(closestServer+x.name);
+                    std::filesystem::path lpath(gamePath+"/"+localPath);
+                    lpath.remove_filename();
+                    if(!lpath.empty())
+                    {
+                        SPDLOG_INFO("Creating directory: {}", lpath.string());
+                        std::filesystem::create_directories(lpath);
+                    }
 
-                std::ofstream out(gamePath+"/"+localPath, std::ofstream::binary);
-                out.write(fdata.data(), fdata.size());
-                out.close();
+                    ZipArchive* zf = ZipArchive::fromBuffer(fdata.data(), fdata.size());
+                    if(zf!=nullptr) {
+
+                        std::vector<ZipEntry> entries = zf->getEntries();
+
+                        SPDLOG_INFO("Zip entries: {}", entries.size());
+
+                        // first detect all the names
+                        for(auto entry : entries)
+                        {
+                            std::string name = entry.getName();
+
+                            SPDLOG_INFO("ZipEntry: {}", name);
+                            if(name.ends_with('\\/'))
+                            {
+                                SPDLOG_INFO("Folder detected: {}", name);
+                                Func::create_directory(gamePath+"/"+name);
+                            }
+                            else
+                            {
+                                SPDLOG_INFO("File detected: {}", name);
+                                std::ofstream unzip(gamePath+"/"+name);
+                                entry.readContent(unzip);
+                                unzip.close();
+
+                                #ifdef __linux__
+                                if(name == "Patafour")
+                                {
+                                    std::filesystem::permissions(
+                                        gamePath+"/Patafour",
+                                        std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec | std::filesystem::perms::others_exec,
+                                        std::filesystem::perm_options::add
+                                    );
+                                }
+                                #endif
+                            }
+                        }
+
+                        zf->close();
+                        delete zf;
+                    }
+                }
             }
+
+            std::ofstream selLang(gamePath+"/resources/lang.txt");
+            selLang << CoreManager::getInstance().getStrRepo()->GetCurrentLanguage();
+            selLang.close();
 
             worked = true;
             break;
