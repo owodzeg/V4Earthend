@@ -160,7 +160,29 @@ void FirstRun::draw()
         else if (diff < -180)
             diff += 360;
 
+        cumulative_angle += diff;
         pupil_angle_d += diff;
+
+        cumulative_angle /= 1 + (0.1 * speed_delta);
+
+        if(fabs(cumulative_angle) >= 500)
+        {
+            float shook = -((fabs(cumulative_angle)-500) / 20);
+            pon_x_offset_d = pow(std::exp(1.0), -0.1*shook)*sin(shook);
+            pon_y_offset_d = pow(std::exp(1.0), -0.01*shook)*sin(shook);
+        }
+
+        if(fabs(cumulative_angle) >= 1500)
+        {
+            messageclouds.clear();
+
+            a_state = 11;
+            shake = -50;
+            cumulative_angle = 0;
+            a_clock.restart();
+
+            peck = true;
+        }
 
         // don't touch!
         //SPDLOG_DEBUG("mouse {} {}", mouse.x, mouse.y);
@@ -202,7 +224,6 @@ void FirstRun::draw()
         {
             shake += 50 / fps;
             pon_x_offset_d = pow(std::exp(1.0), -0.1*shake)*sin(shake);
-
         }
 
         if(a_clock.getElapsedTime().asSeconds() >= 1.2)

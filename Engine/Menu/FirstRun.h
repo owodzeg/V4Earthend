@@ -46,6 +46,7 @@ public:
   float shake = -50;
   bool peck = false;
 
+  float cumulative_angle = 0;
   float initTime = 1;
 
   std::vector<MessageCloud> messageclouds;
