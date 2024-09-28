@@ -84,7 +84,7 @@ void Entry::init()
 
     pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 220, 1590));
 
-    if(localTime->tm_hour >= 5 && localTime->tm_hour <= 9)
+    if(localTime->tm_hour >= 5 && localTime->tm_hour <= 8)
     {
         bg.Load("earthend_1");
 
@@ -93,9 +93,11 @@ void Entry::init()
         tmp.msgcloud_ID = 0;
         tmp.AddDialog("ln_greeting1", true);
         messageclouds.push_back(tmp);
+
+        day_state = 1;
     }
 
-    if(localTime->tm_hour >= 10 && localTime->tm_hour <= 16)
+    if(localTime->tm_hour >= 9 && localTime->tm_hour <= 16)
     {
         bg.Load("earthend_2");
         MessageCloud tmp;
@@ -103,6 +105,8 @@ void Entry::init()
         tmp.msgcloud_ID = 0;
         tmp.AddDialog("ln_greeting2", true);
         messageclouds.push_back(tmp);
+
+        day_state = 2;
     }
 
     if(localTime->tm_hour >= 17 && localTime->tm_hour <= 19)
@@ -114,6 +118,8 @@ void Entry::init()
         tmp.msgcloud_ID = 0;
         tmp.AddDialog("ln_greeting3", true);
         messageclouds.push_back(tmp);
+
+        day_state = 3;
     }
 
     if(localTime->tm_hour >= 20 && localTime->tm_hour <= 22)
@@ -125,6 +131,8 @@ void Entry::init()
         tmp.msgcloud_ID = 0;
         tmp.AddDialog("ln_greeting4", true);
         messageclouds.push_back(tmp);
+
+        day_state = 4;
     }
 
     if(localTime->tm_hour >= 23 || localTime->tm_hour <= 4)
@@ -139,6 +147,8 @@ void Entry::init()
 
         pon_greet.setAnimationSpeed(0); // workaround for lack of animation stalling
         pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 230, 1612));
+
+        day_state = 5;
     }
 
     background.setSize(sf::Vector2f(1280, 720));
@@ -213,12 +223,26 @@ void Entry::draw()
             a_state = 1;
             a_clock.restart();
         }
+        else
+        {
+            std::string loadText = "";
+            for(int i=0; i<=int(floor(a_clock.getElapsedTime().asSeconds())) % 3; i++)
+                loadText += ".";
+
+            debugtext.setFont(font);
+            debugtext.setCharacterSize(30);
+            debugtext.setString("{color 255 255 255}{outline 0 0 0 2}"+loadText);
+            debugtext.setOrigin(debugtext.getLocalBounds().width/2, debugtext.getLocalBounds().height/2);
+            debugtext.setColor(sf::Color::White);
+            debugtext.setPosition(3840/2, 1500);
+        }
     }
 
     if(a_state == 1)
     {
         pon_greet.setAnimation("Units_Patapon_Dance_3");
-        pon_greet.setAnimation("Units_Patapon_Sleep");
+        if(day_state == 5)
+            pon_greet.setAnimation("Units_Patapon_Sleep");
         pon_menu1.setAnimation("Units_Patapon_Idle_1");
         pon_menu2.setAnimation("Units_Patapon_Idle_1");
         pon_menu3.setAnimation("Units_Patapon_Idle_1");
@@ -230,6 +254,9 @@ void Entry::draw()
     bg.Draw(bg_camera);
     if(a_state <= 4)
         window->draw(background);
+
+    if(a_state == 0)
+        debugtext.draw();
 
     if(a_state == 2)
     {

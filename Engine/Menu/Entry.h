@@ -36,6 +36,7 @@ public:
 
   sf::Clock a_clock;
   int a_state = -1;
+  int day_state = 0;
 
   PText p_login,p_register,p_offline;
   PText p_news_header;
@@ -50,6 +51,8 @@ public:
   float cam_placement = 29500;
   AnimatedObject pon_greet, pon_menu1, pon_menu2, pon_menu3;
   int p_active = 0;
+
+  PText debugtext;
 
   std::vector<MessageCloud> messageclouds;
 
