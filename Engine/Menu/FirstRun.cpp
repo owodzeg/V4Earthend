@@ -682,7 +682,7 @@ void FirstRun::draw()
 
             if(mouseCtrl->getClick(0))
             {
-                speed = 0.004;
+                speed = 0.002;
                 a_state = 21;
                 a_clock.restart();
 
@@ -704,7 +704,7 @@ void FirstRun::draw()
         b_next.draw();
     }
 
-    if(a_state == 21 && a_clock.getElapsedTime().asMilliseconds() > 1500)
+    if(a_state == 21 && a_clock.getElapsedTime().asMilliseconds() > 2500)
     {
         CoreManager::getInstance().getCore()->close_window = true;
 
