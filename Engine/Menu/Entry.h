@@ -35,7 +35,7 @@ public:
   sf::RectangleShape background;
 
   sf::Clock a_clock;
-  int a_state = 0;
+  int a_state = -1;
 
   PText p_login,p_register,p_offline;
   PText p_news_header;

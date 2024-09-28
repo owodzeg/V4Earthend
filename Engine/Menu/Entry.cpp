@@ -82,8 +82,6 @@ void Entry::init()
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
     std::tm* localTime = std::localtime(&currentTime);
 
-    pon_greet.LoadConfig("resources/units/patapon.zip");
-    pon_greet.setAnimation("Units_Patapon_Dance_3");
     pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 220, 1590));
 
     if(localTime->tm_hour >= 5 && localTime->tm_hour <= 9)
@@ -139,20 +137,12 @@ void Entry::init()
         tmp.AddDialog("ln_greeting5", true);
         messageclouds.push_back(tmp);
 
-        pon_greet.setAnimation("Units_Patapon_Sleep");
         pon_greet.setAnimationSpeed(0); // workaround for lack of animation stalling
         pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 230, 1612));
     }
 
     background.setSize(sf::Vector2f(1280, 720));
     background.setFillColor(sf::Color(0,0,0,128));
-
-    pon_menu1.LoadConfig("resources/units/patapon.zip");
-    pon_menu1.setAnimation("Units_Patapon_Idle_1");
-    pon_menu2.LoadConfig("resources/units/patapon.zip");
-    pon_menu2.setAnimation("Units_Patapon_Idle_1");
-    pon_menu3.LoadConfig("resources/units/patapon.zip");
-    pon_menu3.setAnimation("Units_Patapon_Idle_1");
 
     a_clock.restart();
 
@@ -189,9 +179,8 @@ void Entry::draw()
     auto strRepo = CoreManager::getInstance().getStrRepo();
     auto font = strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage());
 
-    if(a_state == 0 && a_clock.getElapsedTime().asMilliseconds() > 1500)
+    if(a_state == -1 && a_clock.getElapsedTime().asMilliseconds() > 1500)
     {
-        a_state = 1;
         speed = 0.02;
 
         r_head_d = 62*0.75;
@@ -201,15 +190,38 @@ void Entry::draw()
         pon_x_offset_d = 56;
         pon_y_offset_d = 15;
 
+        a_state = -2;
         a_clock.restart();
     }
 
-    if(a_state == 1 && a_clock.getElapsedTime().asMilliseconds() > 2500)
+    if(a_state == -2 && a_clock.getElapsedTime().asMilliseconds() > 2500)
     {
-        speed = 0.015;
+        worker->setAction(Worker::LOAD_UNITS);
+        a_state = 0;
+        a_clock.restart();
+    }
 
-        pon_y_d -= 200;
-        logo_y_d -= 600;
+    if(a_state == 0 && a_clock.getElapsedTime().asMilliseconds() > 2500)
+    {
+        if(!worker->isBusy())
+        {
+            speed = 0.015;
+
+            pon_y_d -= 200;
+            logo_y_d -= 600;
+
+            a_state = 1;
+            a_clock.restart();
+        }
+    }
+
+    if(a_state == 1)
+    {
+        pon_greet.setAnimation("Units_Patapon_Dance_3");
+        pon_greet.setAnimation("Units_Patapon_Sleep");
+        pon_menu1.setAnimation("Units_Patapon_Idle_1");
+        pon_menu2.setAnimation("Units_Patapon_Idle_1");
+        pon_menu3.setAnimation("Units_Patapon_Idle_1");
 
         a_state = 2;
     }
@@ -219,7 +231,7 @@ void Entry::draw()
     if(a_state <= 4)
         window->draw(background);
 
-    if(a_state == 2 && a_clock.getElapsedTime().asMilliseconds() > 1000)
+    if(a_state == 2)
     {
         swordOffset += 10 * speed_delta;
         if(swordOffset > 20)

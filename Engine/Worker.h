@@ -33,7 +33,8 @@ public:
     {
         IDLE = 0,
         INIT_FIRSTRUN = 1,
-        DOWNLOAD_EARTHEND = 2
+        DOWNLOAD_EARTHEND = 2,
+        LOAD_UNITS = 3
     };
 
     Action myAction;

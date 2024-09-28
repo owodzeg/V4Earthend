@@ -50,6 +50,7 @@ void StateManager::initState(int state)
             }
 
             entry->init();
+            initStateMT(INITWORKER);
             break;
         }
 

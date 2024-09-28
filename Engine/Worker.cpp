@@ -1,5 +1,6 @@
 #include "Worker.h"
 #include "CoreManager.h"
+#include "StateManager.h"
 #include "Func.h"
 #include "ResourceManager.h"
 #include <chrono>
@@ -504,6 +505,19 @@ void Worker::listen()
             worked = true;
             break;
         }
+
+        case LOAD_UNITS: {
+            busy = true;
+
+            SPDLOG_INFO("Loading units");
+            StateManager::getInstance().entry->pon_greet.LoadConfig("resources/units/patapon.zip");
+            StateManager::getInstance().entry->pon_menu1.LoadConfig("resources/units/patapon.zip");
+            StateManager::getInstance().entry->pon_menu2.LoadConfig("resources/units/patapon.zip");
+            StateManager::getInstance().entry->pon_menu3.LoadConfig("resources/units/patapon.zip");
+
+            worked = true;
+            break;
+        }
     }
 
     if(worked)
@@ -514,5 +528,5 @@ void Worker::listen()
 
 bool Worker::isBusy()
 {
-    return busy;
+    return myAction != IDLE;
 }
