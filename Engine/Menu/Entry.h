@@ -53,6 +53,7 @@ public:
   int p_active = 0;
 
   PText debugtext;
+  sf::VertexArray h1,h2,h3;
 
   std::vector<MessageCloud> messageclouds;
 

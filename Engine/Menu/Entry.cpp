@@ -154,6 +154,24 @@ void Entry::init()
     background.setSize(sf::Vector2f(1280, 720));
     background.setFillColor(sf::Color(0,0,0,128));
 
+    h1.setPrimitiveType(sf::TriangleStrip);
+    h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 440), sf::Color(255,255,255,0)));
+    h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 440), sf::Color(255,255,255,0)));
+    h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 610), sf::Color(255,255,255,32)));
+    h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 610), sf::Color(255,255,255,32)));
+
+    h2.setPrimitiveType(sf::TriangleStrip);
+    h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 440), sf::Color(255,255,255,0)));
+    h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 440), sf::Color(255,255,255,0)));
+    h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 610), sf::Color(255,255,255,32)));
+    h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 610), sf::Color(255,255,255,32)));
+
+    h3.setPrimitiveType(sf::TriangleStrip);
+    h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
+    h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
+    h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
+    h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
+
     a_clock.restart();
 
     SPDLOG_INFO("Entry initialized.");
@@ -421,6 +439,19 @@ void Entry::draw()
             {
                 CoreManager::getInstance().getCore()->close_window = true;
             }
+        }
+
+        if(p_active == 1)
+        {
+            window->draw(h1);
+        }
+        if(p_active == 2)
+        {
+            window->draw(h2);
+        }
+        if(p_active == 3)
+        {
+            window->draw(h3);
         }
 
         pedestal.setOrigin(pedestal.getGlobalBounds().width/2, pedestal.getGlobalBounds().height);

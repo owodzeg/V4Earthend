@@ -16,6 +16,17 @@ Background::Background()
 {
     bgView.setSize(1280, 720);
     bgView.setCenter(640, 360);
+
+    sf::VertexArray tmp(sf::TrianglesStrip, 4);
+    tmp[0].position = sf::Vector2f(0,420);
+    tmp[1].position = sf::Vector2f(1280, 420);
+    tmp[2].position = sf::Vector2f(0,720);
+    tmp[3].position = sf::Vector2f(1280, 720);
+    tmp[0].color = sf::Color(0,0,0,0);
+    tmp[1].color = sf::Color(0,0,0,0);
+    tmp[2].color = sf::Color(255,255,255,64);
+    tmp[3].color = sf::Color(255,255,255,64);
+    v_dark_highlight = tmp;
 }
 
 void Background::Load(const std::string& bg_name)
@@ -138,6 +149,8 @@ void Background::Draw(Camera& camera)
     }
 
     window->setView(window->getDefaultView());
+
+    window->draw(v_dark_highlight);
 
     r_ground.setSize(sf::Vector2f(window->getSize().x, floor_height));
     r_ground.setFillColor(sf::Color::Black);
