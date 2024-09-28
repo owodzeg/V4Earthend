@@ -475,7 +475,7 @@ void Worker::listen()
                             else
                             {
                                 SPDLOG_INFO("File detected: {}", name);
-                                std::ofstream unzip(gamePath+"/"+name);
+                                std::ofstream unzip(gamePath+"/"+name, std::ios::binary);
                                 entry.readContent(unzip);
                                 unzip.close();
 
