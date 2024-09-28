@@ -682,13 +682,16 @@ void FirstRun::draw()
 
             if(mouseCtrl->getClick(0))
             {
-                speed = 0.025;
+                speed = 0.004;
                 a_state = 21;
                 a_clock.restart();
 
-                r_head_d = 0;
-                r_white_d = 0;
-                r_pupil_d = 0;
+                pon_x_d = 640;
+                pon_y_d = 360;
+
+                r_head_d = 62*50;
+                r_white_d = 41*50;
+                r_pupil_d = 27*50;
 
                 messageclouds.clear();
             }
