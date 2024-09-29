@@ -7,6 +7,7 @@
 #include "../Mechanics/Background.h"
 #include "../Mechanics/AnimatedObject.h"
 #include "../Dialog/MessageCloud.h"
+#include "../Dialog/DialogBox.h"
 
 class Entry {
 public:
@@ -55,7 +56,16 @@ public:
   PText debugtext;
   sf::VertexArray h1,h2,h3;
 
+  PText p_username, p_email, p_password;
+  SpriteWrapper ib_login, ib_email, ib_password;
+  PText b_login, b_register, b_goback;
+
+  PText ib_t_login, ib_t_email, ib_t_password;
+  sf::String str_login, str_email, str_password;
+  int whichInputBox = 0;
+
   std::vector<MessageCloud> messageclouds;
+  std::vector<PataDialogBox> dialogboxes;
 
   void init();
   void draw();
