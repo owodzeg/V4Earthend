@@ -355,6 +355,12 @@ std::string Func::getInstallDirectory(const std::string& gameName) {
     return installDir;
 }
 
+std::string Func::getCurrentWorkingDir()
+{
+    std::filesystem::path cwd = std::filesystem::current_path();
+    return cwd.string();
+}
+
 std::optional<std::string> Func::openDirectoryDialog() {
     nfdchar_t* outPath = nullptr;
     nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
