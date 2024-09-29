@@ -212,14 +212,9 @@ void Func::RunExecutable(const std::string& executablePath, const std::vector<st
     startupInfo.cb = sizeof(startupInfo);
     ZeroMemory(&processInfo, sizeof(processInfo));
 
-    std::string commandLine = "\"" + executablePath + "\"";
-    for (const auto& arg : args) {
-        commandLine += " \"" + arg + "\"";
-    }
-
     if (CreateProcess(
             nullptr,                         // No module name (use command line)
-            commandLine.data(),               // Command line
+            executablePath.c_str(),               // Command line
             nullptr,                         // Process handle not inheritable
             nullptr,                         // Thread handle not inheritable
             FALSE,                           // Set handle inheritance to FALSE

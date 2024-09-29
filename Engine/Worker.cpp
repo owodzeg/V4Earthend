@@ -22,7 +22,7 @@ Worker::Worker()
 void Worker::platformSpecific()
 {
     platform = "linux";
-    std::string execName = "V4Hero";
+    execName = "V4Hero";
 }
 #else
 void Worker::platformSpecific()
@@ -32,7 +32,7 @@ void Worker::platformSpecific()
     cert_file = Func::getTempDirectory()+"\\cacert.pem";
     cert_path = Func::getTempDirectory();
 
-    std::string execName = "V4Hero.exe";
+    execName = "V4Hero.exe";
 
     SPDLOG_INFO("Cert files: {} {}", cert_path, cert_file);
 }
