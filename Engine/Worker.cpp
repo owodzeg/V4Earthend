@@ -693,8 +693,8 @@ void Worker::listen()
 
         case RUN_HERO: {
             busy = true;
-            std::filesystem::path path(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/");
-            std::filesystem::path gamePath(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/"+execName);
+            std::filesystem::path path = std::filesystem::current_path() / "game" / branch;
+            std::filesystem::path gamePath = std::filesystem::current_path() / "game" / branch / execName;
 
             SPDLOG_INFO("Attempting to launch {}", gamePath.string());
 

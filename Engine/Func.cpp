@@ -212,18 +212,23 @@ void Func::RunExecutable(const std::string& executablePath, const std::vector<st
     startupInfo.cb = sizeof(startupInfo);
     ZeroMemory(&processInfo, sizeof(processInfo));
 
+    std::string commandLine = "\"" + executablePath + "\"";
+    for (const auto& arg : args) {
+        commandLine += " \"" + arg + "\"";
+    }
+
     if (CreateProcess(
-            nullptr,                         // No module name (use command line)
-            executablePath.c_str(),               // Command line
-            nullptr,                         // Process handle not inheritable
-            nullptr,                         // Thread handle not inheritable
-            FALSE,                           // Set handle inheritance to FALSE
-            CREATE_NO_WINDOW,                // Don't create a window for the new process
-            nullptr,                         // Use parent's environment block
-            nullptr,                         // Use parent's starting directory
-            &startupInfo,                    // Pointer to STARTUPINFO structure
-            &processInfo                     // Pointer to PROCESS_INFORMATION structure
-        )) {
+             executablePath.c_str(), // Application name (path to executable)
+             NULL,                // Command line (NULL since we provide the application name)
+             NULL,                // Process handle not inheritable
+             NULL,                // Thread handle not inheritable
+             FALSE,               // Set handle inheritance to FALSE
+             0,                   // No creation flags
+             NULL,                // Use parent's environment block
+             NULL,                // Use parent's starting directory
+             &startupInfo,        // Pointer to STARTUPINFO structure
+             &processInfo         // Pointer to PROCESS_INFORMATION structure
+             )) {
         // Successfully started the process, now close launcher
         CloseHandle(processInfo.hProcess);
         CloseHandle(processInfo.hThread);
