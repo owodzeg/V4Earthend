@@ -10,6 +10,7 @@
 #include "TextureManager.h"
 #include "Input/InputController.h"
 #include "Input/MouseController.h"
+#include "Input/TextInputController.h"
 #include "StringRepository.h"
 #include "Mechanics/Globals.h"
 #include "Worker.h"
@@ -25,6 +26,7 @@ public:
     StringRepository* getStrRepo();
     InputController* getInputController();
     MouseController* getMouseController();
+    TextInputController* getTextInputController();
     sf::RenderWindow* getWindow();
     Globals* getGlobals();
     Worker* getWorker();
@@ -44,6 +46,9 @@ private:
 
     // Pointer to Input controller
     InputController* inputCtrl;
+
+    // Pointer to Text Input controller
+    TextInputController* textCtrl;
 
     // Pointer to Mouse controller
     MouseController* mouseCtrl;

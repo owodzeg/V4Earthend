@@ -30,6 +30,9 @@ void CoreManager::init()
     // Create InputController before window, because we take events from it
     inputCtrl = new InputController;
 
+    // Create TextInputController before window, because we take events from it
+    textCtrl = new TextInputController;
+
     // Create MouseController before window, because we take events from it
     mouseCtrl = new MouseController;
 
@@ -68,6 +71,12 @@ StringRepository* CoreManager::getStrRepo()
 InputController* CoreManager::getInputController()
 {
     return inputCtrl;
+}
+
+// Returns a pointer to InputController.
+TextInputController* CoreManager::getTextInputController()
+{
+    return textCtrl;
 }
 
 // Returns a pointer to InputController.

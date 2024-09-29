@@ -69,6 +69,9 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
     // Get Mouse controller
     MouseController* mouseCtrl = CoreManager::getInstance().getMouseController();
 
+    // Get Text Input controller
+    TextInputController* textCtrl = CoreManager::getInstance().getTextInputController();
+
     std::ifstream fr("resources/v4_launcher");
     if(fr.good())
     {
@@ -99,9 +102,13 @@ void V4Earthend::init(std::vector<std::string>& cmd_args)
             if (event.type == sf::Event::Closed)
                 window->close();
 
+            if (event.type == sf::Event::TextEntered)
+                SPDLOG_DEBUG("Entered: {}", event.text.unicode);
+
             // Forward events to InputController for keyboard and controller usage
             inputCtrl->parseEvents(event);
             mouseCtrl->parseEvents(event);
+            textCtrl->parseEvents(event);
         }
 
         // Calculate framerate per second (delta time)

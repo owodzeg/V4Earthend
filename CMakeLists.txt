@@ -112,6 +112,7 @@ set(ENGINE_FILES
         Engine/Graphics/PNGAnimation.cpp
         Engine/Mechanics/AnimatedObject.cpp
         Engine/Mechanics/Globals.cpp
+        Engine/Input/TextInputController.cpp
 )
 
 add_executable(V4Earthend ${ENGINE_FILES} ${NFD_SRC} main.cpp)
