@@ -947,7 +947,7 @@ void Entry::draw()
         a_state = 12;
     }
 
-    if(a_state == 11 || a_state == 12)
+    if(a_state >= 11)
     {
         logo.setOrigin(logo.getGlobalBounds().width/2, logo.getGlobalBounds().height/2);
         logo.setPosition(logo_x_c, logo_y_c);
@@ -978,11 +978,72 @@ void Entry::draw()
         pon_menu1.Draw();
         pon_menu2.Draw();
         pon_menu3.Draw();
+    }
 
-        if(!worker->isBusy() && worker->hero_version != "")
+    if(a_state == 12)
+    {
+        if(!worker->isBusy())
         {
+            if(worker->error == 1)
+            {
+                PataDialogBox newdb;
+                newdb.Create(font, "ln_error4", {"ln_option_yes", "ln_option_no"}, 3, 1);
+                newdb.id = 1;
+                dialogboxes.push_back(newdb);
 
+                worker->error = -1; //acknowledged
+            }
         }
+    }
+
+    // download hero state
+    if(a_state == 13 || a_state == 14)
+    {
+        auto view = window->getView();
+        window->setView(window->getDefaultView());
+
+        float sumProg = worker->currentTaskTotal;
+        float curProg = 0;
+
+        for(auto x : worker->downloaded_files)
+        {
+            curProg += x.progress;
+        }
+
+        if(a_clock.getElapsedTime().asMilliseconds() > 1000)
+        {
+            if(!worker->isBusy())
+            {
+                a_state = 14;
+            }
+        }
+
+        prog_main.setFont(font);
+        prog_main.setCharacterSize(50);
+        prog_main.setOrigin(prog_main.getLocalBounds().width/2, prog_main.getLocalBounds().height/2);
+        prog_main.setPosition(3840/2, 960);
+        prog_main.setColor(sf::Color(255, 255, 255));
+        prog_main.draw();
+
+        if(worker->downloadStarted)
+        {
+            prog_supp.setFont(font);
+            prog_supp.setCharacterSize(30);
+            prog_supp.setOrigin(prog_supp.getLocalBounds().width/2, prog_supp.getLocalBounds().height/2);
+            prog_supp.setString("{color 255 255 255}"+std::to_string(int(curProg/1024))+"/"+std::to_string(int(sumProg/1024))+" kB");
+            prog_supp.setPosition(3840/2, 1200);
+            prog_supp.setColor(sf::Color(255, 255, 255));
+            prog_supp.draw();
+        }
+
+        window->setView(view);
+    }
+
+    if(a_state == 14 && a_clock.getElapsedTime().asMilliseconds() > 2000)
+    {
+        /// run!
+        worker->setAction(Worker::RUN_HERO);
+        a_state = 15;
     }
 
     std::vector<int> db_e; ///dialog box erase
@@ -1025,7 +1086,6 @@ void Entry::draw()
                         a_state = 10;
                         worker->isOffline = true;
 
-
                         bg_camera.debug_x_dest = cam_placement;
                         entry_camera.debug_x_dest = cam_placement;
 
@@ -1040,6 +1100,18 @@ void Entry::draw()
                         CoreManager::getInstance().getGlobals()->set(1, std::string("Guest"));
                     }
 
+                    if (dialogboxes[dialogboxes.size() - 1].id == 1)
+                    {
+                        dialogboxes[dialogboxes.size() - 1].Close();
+
+                        // OFFLINE MODE - download the game
+                        worker->branch = "main";
+                        worker->setAction(Worker::DOWNLOAD_HERO);
+
+                        a_state = 13;
+
+                    }
+
                     break;
                 }
 
@@ -1049,6 +1121,17 @@ void Entry::draw()
                         SPDLOG_DEBUG("No");
                         dialogboxes[dialogboxes.size() - 1].Close();
                         a_state = 2;
+                    }
+
+                    if (dialogboxes[dialogboxes.size() - 1].id == 1)
+                    {
+                        SPDLOG_DEBUG("No");
+                        dialogboxes[dialogboxes.size() - 1].Close();
+
+                        bg_camera.debug_x_dest = cam_placement;
+                        entry_camera.debug_x_dest = cam_placement;
+
+                        a_state = 10;
                     }
 
                     break;

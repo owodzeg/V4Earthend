@@ -67,6 +67,9 @@ public:
   std::vector<MessageCloud> messageclouds;
   std::vector<PataDialogBox> dialogboxes;
 
+  PText prog_main;
+  PText prog_supp;
+
   void init();
   void draw();
 };

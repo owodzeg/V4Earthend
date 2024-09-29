@@ -63,6 +63,11 @@ public:
     std::string branch = "main";
     std::string hero_version = "";
 
+    int error = -1;
+    int rtn = -1;
+
+    bool downloadStarted = false;
+
     Worker();
     void platformSpecific();
     void init();

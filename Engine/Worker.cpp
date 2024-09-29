@@ -113,10 +113,13 @@ int Worker::ProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow
         worker->dl_buffer[worker->dl_buffer.size()-1].progress = worker->currentDLProgress;
         worker->dl_buffer[worker->dl_buffer.size()-1].size = worker->currentDLTotal;
 
-        if(worker->myAction == Worker::DOWNLOAD_EARTHEND)
+        if(worker->myAction == Worker::DOWNLOAD_EARTHEND || worker->myAction == Worker::DOWNLOAD_HERO)
         {
-            worker->downloaded_files.back().progress = worker->currentDLProgress;
-            worker->downloaded_files.back().size = worker->currentDLTotal;
+            if(worker->downloaded_files.size() > 0)
+            {
+                worker->downloaded_files.back().progress = worker->currentDLProgress;
+                worker->downloaded_files.back().size = worker->currentDLTotal;
+            }
         }
         //SPDLOG_INFO("Download Progress: {:.2f}%", progress);
     } else {
@@ -527,11 +530,30 @@ void Worker::listen()
 
             if(!isOffline)
             {
+                getAvailableServers();
                 testConnection();
 
-                auto v = downloadFromUrlPost(closestServer+"getversion_new.php", {"product_id", "product_branch"}, {"hero", "main"});
+                auto v = downloadFromUrlPost(closestServer+"getversion_new.php", {"product_id", "product_branch"}, {"hero", branch});
                 std::string version = std::string(v.begin(), v.end());
-                SPDLOG_INFO("Current Hero version {}", version);
+                SPDLOG_INFO("Current online Hero version {}", version);
+
+                std::ifstream checkver("v4hero_"+branch+"_ver.txt");
+                std::string localver = "";
+
+                if(checkver.good())
+                {
+                    std::getline(checkver, localver);
+                }
+                else
+                {
+                    SPDLOG_INFO("No game package found. Downloading latest V4Hero for branch {}.", branch);
+                    myAction = DOWNLOAD_HERO;
+                }
+
+                if(version != localver)
+                {
+                    rtn = 1; // version mismatch = update found
+                }
             }
             else
             {
@@ -545,6 +567,125 @@ void Worker::listen()
 
         case DOWNLOAD_HERO: {
             busy = true;
+            auto entry = StateManager::getInstance().entry;
+            entry->prog_main.setStringKey("ln_working");
+            getAvailableServers();
+            testConnection();
+
+            auto v = downloadFromUrlPost(closestServer+"getversion_new.php", {"product_id", "product_branch"}, {"hero", branch});
+            std::string version = std::string(v.begin(), v.end());
+            SPDLOG_INFO("Current V4Hero version {}", version);
+            auto f = downloadFromUrlPost(closestServer+"getfiles_new.php",{"product_id", "product_ver", "product_platform", "product_branch"}, {"hero", version, platform, branch});
+            std::string content = std::string(f.begin(), f.end());
+            SPDLOG_INFO("Files: {}", content);
+
+            downloadStarted = true;
+
+            entry->prog_main.setStringKey("ln_downloading");
+            SPDLOG_INFO("Downloading contents to {}", gamePath);
+            auto entryList = Func::Split(content, '\n');
+
+            std::string startDir = "";
+            int totalSize = 0;
+
+            for(auto entry : entryList)
+            {
+                if(entry.find("START_DIR") != std::string::npos)
+                {
+                    startDir = Func::Split(entry, ':')[1];
+                    continue;
+                }
+
+                if(entry.find("TOTAL_SIZE") != std::string::npos)
+                {
+                    totalSize = atoi(Func::Split(entry, ':')[1].c_str());
+                    continue;
+                }
+
+                auto file = Func::Split(entry, ',');
+
+                std::string f_name = file[0];
+                std::string f_hash = file[1];
+                int f_size = atoi(file[2].c_str());
+
+                FileEntry n;
+                n.name = f_name;
+                n.size = f_size;
+                n.progress = 0;
+                update_files.push_back(n);
+            }
+
+            currentTaskTotal = totalSize;
+
+            for(auto x : update_files)
+            {
+                downloaded_files.push_back(x);
+
+                std::string localPath = std::regex_replace(x.name, std::regex(startDir), "");
+                SPDLOG_INFO("Downloading {} ({}), size {} bytes", localPath, x.name, x.size);
+
+                std::filesystem::path gamePath(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/");
+
+                if(localPath == "package.zip")
+                {
+                    auto fdata = downloadFromUrl(closestServer+x.name);
+                    std::filesystem::path lpath(gamePath.string()+"/"+localPath);
+                    lpath.remove_filename();
+                    if(!lpath.empty())
+                    {
+                        SPDLOG_INFO("Creating directory: {}", lpath.string());
+                        std::filesystem::create_directories(lpath);
+                    }
+
+                    entry->prog_main.setStringKey("ln_patching");
+                    downloadStarted = false;
+
+                    ZipArchive* zf = ZipArchive::fromBuffer(fdata.data(), fdata.size());
+                    if(zf!=nullptr) {
+
+                        std::vector<ZipEntry> entries = zf->getEntries();
+
+                        SPDLOG_INFO("Zip entries: {}", entries.size());
+
+                        // first detect all the names
+                        for(auto entry : entries)
+                        {
+                            std::string name = entry.getName();
+
+                            SPDLOG_INFO("ZipEntry: {}", name);
+                            if(name.ends_with('\\/'))
+                            {
+                                SPDLOG_INFO("Folder detected: {}", name);
+                                Func::create_directory(gamePath.string()+"/"+name);
+                            }
+                            else
+                            {
+                                SPDLOG_INFO("File detected: {}", name);
+                                std::ofstream unzip(gamePath.string()+"/"+name, std::ios::binary);
+                                entry.readContent(unzip);
+                                unzip.close();
+
+                                #ifdef __linux__
+                                if(name == "Patafour")
+                                {
+                                    std::filesystem::permissions(
+                                        gamePath.string()+"/Patafour",
+                                        std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec | std::filesystem::perms::others_exec,
+                                        std::filesystem::perm_options::add
+                                    );
+                                }
+                                #endif
+                            }
+                        }
+
+                        zf->close();
+                        delete zf;
+                    }
+                }
+            }
+
+            entry->prog_main.setStringKey("fr_finished");
+            entry->a_clock.restart();
 
             worked = true;
             break;
@@ -555,10 +696,18 @@ void Worker::listen()
             std::filesystem::path path(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/");
             std::filesystem::path gamePath(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/"+execName);
 
+            SPDLOG_INFO("Attempting to launch {}", gamePath.string());
+
             if(std::filesystem::exists(gamePath))
             {
+                SPDLOG_INFO("Launching {}", gamePath.string());
                 CoreManager::getInstance().getCore()->close_window = true;
                 Func::RunExecutable(gamePath.string(), {});
+            }
+            else
+            {
+                SPDLOG_WARN("Game data not found...");
+                error = 1;
             }
             worked = true;
             break;
