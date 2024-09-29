@@ -395,22 +395,6 @@ void PNGAnimation::Draw()
     InputController* inputController = CoreManager::getInstance().getInputController();
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
 
-    if(inputController->isKeyPressed(Input::Keys::LEFT))
-    {
-        if(currentAnimation > 0)
-            --currentAnimation;
-
-        currentFrame = 0;
-    }
-
-    if(inputController->isKeyPressed(Input::Keys::RIGHT))
-    {
-        if (currentAnimation < animations.size()-1)
-            ++currentAnimation;
-
-        currentFrame = 0;
-    }
-
     Animation& curAnim = animations[currentAnimation];
 
     if(isPlaying)

@@ -41,32 +41,6 @@ void Camera::Work(sf::View view, float dest_zoom_over)
     dest_zoom = dest_zoom_over;
     manual_x_dest = 0;
 
-
-    /** Mission controls **/
-
-    if (!missionEnd && !lockMovement)
-    {
-        if (inputCtrl->isKeyHeld(Input::Keys::LTRIGGER))
-        {
-            manual_x_dest = -600;
-        }
-
-        if (inputCtrl->isKeyHeld(Input::Keys::RTRIGGER))
-        {
-            manual_x_dest = 600;
-        }
-
-        if (inputCtrl->isKeyHeld(Input::Keys::LEFT))
-        {
-            debug_x_dest -= 10;
-        }
-
-        if (inputCtrl->isKeyHeld(Input::Keys::RIGHT))
-        {
-            debug_x_dest += 10;
-        }
-    }
-
     /** Move camera **/
 
     //camera_x += camera_xspeed / fps;
