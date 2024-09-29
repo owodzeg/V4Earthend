@@ -34,13 +34,17 @@ public:
         IDLE = 0,
         INIT_FIRSTRUN = 1,
         DOWNLOAD_EARTHEND = 2,
-        LOAD_UNITS = 3
+        LOAD_UNITS = 3,
+        CHECK_HERO_UPDATE = 4,
+        DOWNLOAD_HERO = 5,
+        RUN_HERO = 6
     };
 
     Action myAction;
 
     std::string platform = "windows";
     std::string gamePath = "";
+    std::string execName = "V4Hero";
 
     struct FileEntry
     {
@@ -54,6 +58,10 @@ public:
 
     std::string cert_file;
     std::string cert_path;
+
+    bool isOffline = false;
+    std::string branch = "main";
+    std::string hero_version = "";
 
     Worker();
     void platformSpecific();

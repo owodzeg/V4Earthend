@@ -22,6 +22,7 @@ Worker::Worker()
 void Worker::platformSpecific()
 {
     platform = "linux";
+    std::string execName = "V4Hero";
 }
 #else
 void Worker::platformSpecific()
@@ -30,6 +31,8 @@ void Worker::platformSpecific()
 
     cert_file = Func::getTempDirectory()+"\\cacert.pem";
     cert_path = Func::getTempDirectory();
+
+    std::string execName = "V4Hero.exe";
 
     SPDLOG_INFO("Cert files: {} {}", cert_path, cert_file);
 }
@@ -515,6 +518,48 @@ void Worker::listen()
             StateManager::getInstance().entry->pon_menu2.LoadConfig("resources/units/patapon.zip");
             StateManager::getInstance().entry->pon_menu3.LoadConfig("resources/units/patapon.zip");
 
+            worked = true;
+            break;
+        }
+
+        case CHECK_HERO_UPDATE: {
+            busy = true;
+
+            if(!isOffline)
+            {
+                testConnection();
+
+                auto v = downloadFromUrlPost(closestServer+"getversion_new.php", {"product_id", "product_branch"}, {"hero", "main"});
+                std::string version = std::string(v.begin(), v.end());
+                SPDLOG_INFO("Current Hero version {}", version);
+            }
+            else
+            {
+                setAction(RUN_HERO);
+                break;
+            }
+
+            worked = true;
+            break;
+        }
+
+        case DOWNLOAD_HERO: {
+            busy = true;
+
+            worked = true;
+            break;
+        }
+
+        case RUN_HERO: {
+            busy = true;
+            std::filesystem::path path(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/");
+            std::filesystem::path gamePath(Func::getCurrentWorkingDir()+"/"+"game/"+branch+"/"+execName);
+
+            if(std::filesystem::exists(gamePath))
+            {
+                CoreManager::getInstance().getCore()->close_window = true;
+                Func::RunExecutable(gamePath.string(), {});
+            }
             worked = true;
             break;
         }
