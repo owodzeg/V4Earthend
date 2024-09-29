@@ -45,6 +45,7 @@ public:
     std::string platform = "windows";
     std::string gamePath = "";
     std::string execName = "V4Hero";
+    std::string launcherExecName = "Patafour";
 
     struct FileEntry
     {

@@ -23,6 +23,7 @@ void Worker::platformSpecific()
 {
     platform = "linux";
     execName = "V4Hero";
+    launcherExecName = "Patafour";
 }
 #else
 void Worker::platformSpecific()
@@ -33,6 +34,7 @@ void Worker::platformSpecific()
     cert_path = Func::getTempDirectory();
 
     execName = "V4Hero.exe";
+    launcherExecName = "Patafour.exe";
 
     SPDLOG_INFO("Cert files: {} {}", cert_path, cert_file);
 }

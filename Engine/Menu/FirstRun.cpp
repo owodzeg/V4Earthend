@@ -719,7 +719,9 @@ void FirstRun::draw()
 
         if(opt1)
         {
-            Func::RunExecutable(gamePath+"/Patafour", {});
+            std::filesystem::path p = gamePath;
+            p /= worker->launcherExecName;
+            Func::RunExecutable(p.string(), {});
         }
 
         a_state = 22;
