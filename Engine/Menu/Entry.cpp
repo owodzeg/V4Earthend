@@ -420,10 +420,27 @@ void Entry::draw()
             sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
             sword.draw();
 
-            if(mouseCtrl->getClick(0))
+            if(mouseCtrl->getClick(0) && !worker->isBusy())
             {
-
+                worker->setAction(Worker::LOGIN);
             }
+        }
+
+        if(!worker->isBusy() && worker->rtn == 1)
+        {
+            worker->rtn = -1;
+            a_state = 10;
+
+            bg_camera.debug_x_dest = cam_placement;
+            entry_camera.debug_x_dest = cam_placement;
+
+            logo_x_d = cam_placement*3 + 1425;
+            logo_y_d = 460;
+            logo_x_c = logo_x_d;
+            logo_y_c = logo_y_d;
+
+            background.setSize(sf::Vector2f(322, 720));
+            background.setPosition(cam_placement+960, 0);
         }
 
         pos = b_goback.getPosition();
@@ -471,17 +488,25 @@ void Entry::draw()
             cursor += "|";
 
         auto inputCtrl = CoreManager::getInstance().getInputController();
+        auto textCtrl = CoreManager::getInstance().getTextInputController();
+
         if(inputCtrl->isKeyPressed(Input::Keys::UP))
         {
             whichInputBox = 0;
             CoreManager::getInstance().getTextInputController()->latchOn(str_login);
 
         }
-        if(inputCtrl->isKeyPressed(Input::Keys::DOWN))
+        if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
         {
             whichInputBox = 1;
             CoreManager::getInstance().getTextInputController()->latchOn(str_password);
         }
+
+        if(whichInputBox == 0)
+            CoreManager::getInstance().getTextInputController()->latchOn(str_login);
+
+        if(whichInputBox == 1)
+            CoreManager::getInstance().getTextInputController()->latchOn(str_password);
 
         ib_t_login.setFont(font);
         ib_t_login.setCharacterSize(30);
@@ -553,7 +578,7 @@ void Entry::draw()
     }
 
     // REGISTER
-    if(a_state == 4)
+    if(a_state == 4 && dialogboxes.size() == 0)
     {
         b_register.setFont(font);
         b_register.setCharacterSize(36);
@@ -582,10 +607,20 @@ void Entry::draw()
             sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
             sword.draw();
 
-            if(mouseCtrl->getClick(0))
+            if(mouseCtrl->getClick(0) && !worker->isBusy())
             {
-
+                worker->setAction(Worker::REGISTER);
             }
+        }
+
+        if(!worker->isBusy() && worker->rtn == 2)
+        {
+            worker->rtn = -1;
+
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_info1", {"ln_option_understood"}, 3, 1);
+            newdb.id = 2;
+            dialogboxes.push_back(newdb);
         }
 
         pos = b_goback.getPosition();
@@ -645,12 +680,14 @@ void Entry::draw()
             cursor += "|";
 
         auto inputCtrl = CoreManager::getInstance().getInputController();
+        auto textCtrl = CoreManager::getInstance().getTextInputController();
+
         if(inputCtrl->isKeyPressed(Input::Keys::UP))
         {
             if(whichInputBox>0)
             whichInputBox--;
         }
-        if(inputCtrl->isKeyPressed(Input::Keys::DOWN))
+        if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
         {
             if(whichInputBox<2)
             whichInputBox++;
@@ -944,7 +981,7 @@ void Entry::draw()
     if(a_state == 11)
     {
         worker->setAction(Worker::CHECK_HERO_UPDATE);
-        a_state = 12;
+        a_state = 13;
     }
 
     if(a_state >= 11)
@@ -1014,7 +1051,23 @@ void Entry::draw()
         {
             if(!worker->isBusy())
             {
-                a_state = 14;
+                if(worker->rtn != 1)
+                {
+                    a_state = 14;
+                }
+                else
+                {
+                    if(worker->rtn == 1)
+                    {
+                        PataDialogBox newdb;
+                        newdb.Create(font, "ln_gameupdatefound", {"ln_option_yes", "ln_option_no"}, 3, 1);
+                        newdb.id = 3;
+                        dialogboxes.push_back(newdb);
+
+                        a_state = 12;
+                        worker->rtn = -1;
+                    }
+                }
             }
         }
 
@@ -1030,7 +1083,7 @@ void Entry::draw()
             prog_supp.setFont(font);
             prog_supp.setCharacterSize(30);
             prog_supp.setOrigin(prog_supp.getLocalBounds().width/2, prog_supp.getLocalBounds().height/2);
-            prog_supp.setString("{color 255 255 255}"+std::to_string(int(curProg/1024))+"/"+std::to_string(int(sumProg/1024))+" kB");
+            prog_supp.setString("{color 255 255 255}{outline 1 0 0 0}"+std::to_string(int(curProg/1024))+"/"+std::to_string(int(sumProg/1024))+" kB");
             prog_supp.setPosition(3840/2, 1200);
             prog_supp.setColor(sf::Color(255, 255, 255));
             prog_supp.draw();
@@ -1109,7 +1162,21 @@ void Entry::draw()
                         worker->setAction(Worker::DOWNLOAD_HERO);
 
                         a_state = 13;
+                    }
 
+                    if (dialogboxes[dialogboxes.size() - 1].id == 2)
+                    {
+                        dialogboxes[dialogboxes.size() - 1].Close();
+
+                        a_state = 2;
+                    }
+
+                    if (dialogboxes[dialogboxes.size() - 1].id == 3)
+                    {
+                        dialogboxes[dialogboxes.size() - 1].Close();
+                        worker->setAction(Worker::DOWNLOAD_HERO);
+
+                        a_state = 13;
                     }
 
                     break;
@@ -1132,6 +1199,13 @@ void Entry::draw()
                         entry_camera.debug_x_dest = cam_placement;
 
                         a_state = 10;
+                    }
+
+                    if (dialogboxes[dialogboxes.size() - 1].id == 3)
+                    {
+                        SPDLOG_INFO("Not updating.");
+                        dialogboxes[dialogboxes.size() - 1].Close();
+                        worker->setAction(Worker::RUN_HERO);
                     }
 
                     break;

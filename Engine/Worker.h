@@ -37,7 +37,9 @@ public:
         LOAD_UNITS = 3,
         CHECK_HERO_UPDATE = 4,
         DOWNLOAD_HERO = 5,
-        RUN_HERO = 6
+        RUN_HERO = 6,
+        LOGIN = 7,
+        REGISTER = 8
     };
 
     Action myAction;

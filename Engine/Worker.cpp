@@ -550,11 +550,14 @@ void Worker::listen()
                 {
                     SPDLOG_INFO("No game package found. Downloading latest V4Hero for branch {}.", branch);
                     myAction = DOWNLOAD_HERO;
+                    break;
                 }
 
                 if(version != localver)
                 {
                     rtn = 1; // version mismatch = update found
+                    SPDLOG_INFO("Version mismatch: local {} vs online {}.", localver, version);
+                    CoreManager::getInstance().getGlobals()->set(2, version);
                 }
             }
             else
@@ -569,8 +572,8 @@ void Worker::listen()
 
         case DOWNLOAD_HERO: {
             busy = true;
-            auto entry = StateManager::getInstance().entry;
-            entry->prog_main.setStringKey("ln_working");
+            auto entryPtr = StateManager::getInstance().entry;
+            entryPtr->prog_main.setStringKey("ln_working");
             getAvailableServers();
             testConnection();
 
@@ -583,7 +586,7 @@ void Worker::listen()
 
             downloadStarted = true;
 
-            entry->prog_main.setStringKey("ln_downloading");
+            entryPtr->prog_main.setStringKey("ln_downloading");
             SPDLOG_INFO("Downloading contents to {}", gamePath);
             auto entryList = Func::Split(content, '\n');
 
@@ -639,7 +642,7 @@ void Worker::listen()
                         std::filesystem::create_directories(lpath);
                     }
 
-                    entry->prog_main.setStringKey("ln_patching");
+                    entryPtr->prog_main.setStringKey("ln_patching");
                     downloadStarted = false;
 
                     ZipArchive* zf = ZipArchive::fromBuffer(fdata.data(), fdata.size());
@@ -686,8 +689,12 @@ void Worker::listen()
                 }
             }
 
-            entry->prog_main.setStringKey("fr_finished");
-            entry->a_clock.restart();
+            entryPtr->prog_main.setStringKey("fr_finished");
+            entryPtr->a_clock.restart();
+
+            std::ofstream verfile("v4hero_"+branch+"_ver.txt", std::ios::trunc);
+            verfile << version;
+            verfile.close();
 
             worked = true;
             break;
@@ -711,6 +718,40 @@ void Worker::listen()
                 SPDLOG_WARN("Game data not found...");
                 error = 1;
             }
+            worked = true;
+            break;
+        }
+
+        case LOGIN: {
+            auto entry = StateManager::getInstance().entry;
+            auto v = downloadFromUrlPost("https://patanet.patafourgame.com/api/login.php", {"login", "pass"}, {entry->str_login, entry->str_password});
+            std::string response = std::string(v.begin(), v.end());
+
+            SPDLOG_INFO("Login response: {}", response);
+
+            if(response == "VERIFIED")
+            {
+                CoreManager::getInstance().getGlobals()->set(1, std::string(entry->str_login));
+                rtn = 1;
+            }
+
+            worked = true;
+            break;
+        }
+
+        case REGISTER: {
+            auto entry = StateManager::getInstance().entry;
+            auto v = downloadFromUrlPost("https://patanet.patafourgame.com/api/register.php", {"login", "email", "pass"}, {entry->str_login, entry->str_email, entry->str_password});
+            std::string response = std::string(v.begin(), v.end());
+
+            SPDLOG_INFO("Login response: {}", response);
+
+            if(response == "SUCCESS")
+            {
+                CoreManager::getInstance().getGlobals()->set(1, std::string(entry->str_login));
+                rtn = 2;
+            }
+
             worked = true;
             break;
         }
