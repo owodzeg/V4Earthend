@@ -21,8 +21,18 @@ void TextInputController::parseEvents(const sf::Event& event) {
             if (m_targetString->getSize() > 0) {
                 m_targetString->erase(std::distance(m_targetString->begin(),m_targetString->end()-1));
             }
+        } else if(event.text.unicode == 9 || event.text.unicode == 13)
+        {
+            special = 1;
         } else {
             m_targetString->insert(m_targetString->getSize(), static_cast<wchar_t>(event.text.unicode));
         }
     }
+}
+
+int TextInputController::sendSpecial()
+{
+    int old = int(special);
+    special = -1;
+    return old;
 }
