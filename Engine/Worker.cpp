@@ -703,8 +703,8 @@ void Worker::listen()
             if(std::filesystem::exists(gamePath))
             {
                 SPDLOG_INFO("Launching {}", gamePath.string());
-                CoreManager::getInstance().getCore()->close_window = true;
                 Func::RunExecutable(gamePath.string(), {});
+                CoreManager::getInstance().getCore()->close_window = true;
             }
             else
             {
