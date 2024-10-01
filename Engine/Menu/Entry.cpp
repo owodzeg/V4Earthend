@@ -1,10 +1,10 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 
-#include <spdlog/spdlog.h>
-#include <fstream>
-#include "CoreManager.h"
 #include "Entry.h"
 #include "../Func.h"
+#include "CoreManager.h"
+#include <fstream>
+#include <spdlog/spdlog.h>
 
 void Entry::init()
 {
@@ -929,6 +929,8 @@ void Entry::draw()
                 pon_menu4.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*3, 1310));
                 pon_menu5.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*4, 1310));
 
+                messageclouds.clear();
+
                 MessageCloud tmp1;
                 tmp1.setFontSize(20);
                 tmp1.Create(20, sf::Vector2f(pon_menu1.getGlobalPosition().x+280, pon_menu1.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
@@ -1108,6 +1110,8 @@ void Entry::draw()
 
     if(a_state >= 11 && a_state <= 15)
     {
+        cam_placement = 29500;
+
         logo.setOrigin(logo.getGlobalBounds().width/2, logo.getGlobalBounds().height/2);
         logo.setPosition(logo_x_c, logo_y_c);
         logo.draw();
@@ -1222,7 +1226,7 @@ void Entry::draw()
     }
 
     // SETTINGS!!!
-    if(a_state == 16)
+    if(a_state == 16 && dialogboxes.size() == 0)
     {
         h1.clear();
         h1.setPrimitiveType(sf::TriangleStrip);
@@ -1269,7 +1273,15 @@ void Entry::draw()
             p_active = 1;
             if(mouseCtrl->getClick(0))
             {
-                a_state = 11;
+
+                std::vector<sf::String> text_branches;
+                for(auto x:worker->all_branches)
+                    text_branches.push_back(sf::String(x));
+                // CHANGE BRANCH
+                PataDialogBox newdb;
+                newdb.CreateCustom(font, "ln_settings1", text_branches, 3, 1);
+                newdb.id = 5;
+                dialogboxes.push_back(newdb);
             }
         }
         if(mouse.x > 503+710-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
@@ -1277,7 +1289,8 @@ void Entry::draw()
             p_active = 2;
             if(mouseCtrl->getClick(0))
             {
-                a_state = 16;
+                // OPEN GAME PATH
+                Func::openFileExplorer(std::filesystem::current_path().string());
             }
         }
         if(mouse.x > 503+710*2-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*2+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
@@ -1285,7 +1298,7 @@ void Entry::draw()
             p_active = 3;
             if(mouseCtrl->getClick(0))
             {
-                CoreManager::getInstance().getCore()->close_window = true;
+                // CHANGE LANGUAGE
             }
         }
         if(mouse.x > 503+710*3-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*3+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
@@ -1384,6 +1397,58 @@ void Entry::draw()
                 background.setPosition(cam_placement+960, 0);
 
                 messageclouds.clear();
+
+                auto now = std::chrono::system_clock::now();
+                std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+                std::tm* localTime = std::localtime(&currentTime);
+
+                if(localTime->tm_hour >= 5 && localTime->tm_hour <= 8)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting1", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 9 && localTime->tm_hour <= 16)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting2", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 17 && localTime->tm_hour <= 19)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting3", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 20 && localTime->tm_hour <= 22)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting4", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 23 || localTime->tm_hour <= 4)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+320, pon_greet.getGlobalPosition().y+45), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting5", true);
+                    messageclouds.push_back(tmp);
+
+                    pon_greet.setAnimationSpeed(0); // workaround for lack of animation stalling
+                    pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 230, 1612));
+                }
             }
         }
 
@@ -1521,13 +1586,21 @@ void Entry::draw()
     {
         if(dialogboxes.size() > 0)
         {
-            switch (dialogboxes[dialogboxes.size() - 1].CheckSelectedOption())
+            auto& box = dialogboxes.back();
+            if(box.id == 5)
+            {
+                worker->branch = box.options_saved[box.CheckSelectedOption()];
+                SPDLOG_INFO("Branch changed to {}", worker->branch);
+                box.Close();
+            }
+
+            switch (box.CheckSelectedOption())
             {
                 case 0: {
-                    if (dialogboxes[dialogboxes.size() - 1].id == 0)
+                    if (box.id == 0)
                     {
                         SPDLOG_DEBUG("Yes");
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
 
                         // play offline
                         a_state = 10;
@@ -1547,9 +1620,9 @@ void Entry::draw()
                         CoreManager::getInstance().getGlobals()->set(1, std::string("Guest"));
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 1)
+                    if (box.id == 1)
                     {
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
 
                         // OFFLINE MODE - download the game
                         worker->branch = "main";
@@ -1558,41 +1631,41 @@ void Entry::draw()
                         a_state = 13;
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 2)
+                    if (box.id == 2)
                     {
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
 
                         a_state = 2;
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 3)
+                    if (box.id == 3)
                     {
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
                         worker->setAction(Worker::DOWNLOAD_HERO);
 
                         a_state = 13;
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 4)
+                    if (box.id == 4)
                     {
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
                     }
 
                     break;
                 }
 
                 case 1: {
-                    if (dialogboxes[dialogboxes.size() - 1].id == 0)
+                    if (box.id == 0)
                     {
                         SPDLOG_DEBUG("No");
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
                         a_state = 2;
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 1)
+                    if (box.id == 1)
                     {
                         SPDLOG_DEBUG("No");
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
 
                         bg_camera.debug_x_dest = cam_placement;
                         entry_camera.debug_x_dest = cam_placement;
@@ -1600,10 +1673,10 @@ void Entry::draw()
                         a_state = 10;
                     }
 
-                    if (dialogboxes[dialogboxes.size() - 1].id == 3)
+                    if (box.id == 3)
                     {
                         SPDLOG_INFO("Not updating.");
-                        dialogboxes[dialogboxes.size() - 1].Close();
+                        box.Close();
                         worker->setAction(Worker::RUN_HERO);
                     }
 
