@@ -434,16 +434,15 @@ void Func::smoothTransition(float& current, float& destination, float& delta)
 void Func::openFileExplorer(const std::string& path) {
 #ifdef _WIN32
     // Windows: Use the "explorer" command
-    std::string command = "explorer \"" + path + "\"";
+    ShellExecute(NULL, "open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 #elif __linux__
     // Linux: Use "xdg-open" command, which is the standard for opening directories/files
     std::string command = "xdg-open \"" + path + "\"";
+    if (std::system(command.c_str()) != 0)
+    {
+        throw std::runtime_error("Failed to open file explorer");
+    }
 #else
     throw std::runtime_error("Unsupported platform");
 #endif
-
-    // Execute the command using system()
-    if (std::system(command.c_str()) != 0) {
-        throw std::runtime_error("Failed to open file explorer");
-    }
 }
