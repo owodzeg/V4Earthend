@@ -522,6 +522,8 @@ void Worker::listen()
             StateManager::getInstance().entry->pon_menu1.LoadConfig("resources/units/patapon.zip");
             StateManager::getInstance().entry->pon_menu2.LoadConfig("resources/units/patapon.zip");
             StateManager::getInstance().entry->pon_menu3.LoadConfig("resources/units/patapon.zip");
+            StateManager::getInstance().entry->pon_menu4.LoadConfig("resources/units/patapon.zip");
+            StateManager::getInstance().entry->pon_menu5.LoadConfig("resources/units/patapon.zip");
 
             worked = true;
             break;
@@ -724,6 +726,27 @@ void Worker::listen()
 
         case LOGIN: {
             auto entry = StateManager::getInstance().entry;
+
+            if(entry->str_login != "" && entry->str_password != "")
+            {
+                std::ofstream lastLogin("loginDetails.dat");
+                lastLogin << std::string(entry->str_login) << "\n" << std::string(entry->str_password);
+                lastLogin.close();
+            }
+            else
+            {
+                std::ifstream lastLogin("loginDetails.dat");
+                if(lastLogin.good())
+                {
+                    std::string login, password;
+                    std::getline(lastLogin, login);
+                    std::getline(lastLogin, password);
+
+                    entry->str_login = login;
+                    entry->str_password = password;
+                }
+            }
+
             auto v = downloadFromUrlPost("https://patanet.patafourgame.com/api/login.php", {"login", "pass"}, {entry->str_login, entry->str_password});
             std::string response = std::string(v.begin(), v.end());
 
@@ -732,7 +755,45 @@ void Worker::listen()
             if(response == "VERIFIED")
             {
                 CoreManager::getInstance().getGlobals()->set(1, std::string(entry->str_login));
+
+                auto rq = downloadFromUrlPost("https://patanet.patafourgame.com/api/token.php", {"login", "pass"}, {entry->str_login, entry->str_password});
+                std::vector<std::string> params = Func::Split(std::string(rq.begin(), rq.end()), '_');
+                token = params[0];
+                token_expire = atoi(params[1].c_str());
+                SPDLOG_INFO("Token: {}, expires on {}", token, token_expire);
+
+                rq = downloadFromUrlPost("https://patanet.patafourgame.com/api/isSupporter.php", {"login"}, {entry->str_login});
+                response = std::string(rq.begin(), rq.end());
+
+                if(response == "YES")
+                {
+                    isSupporter = true;
+                    SPDLOG_INFO("You are a supporter. Thank you!");
+                }
+
+                rq = downloadFromUrlPost("https://dl.patafourgame.com/getBranches.php", {"login", "token"}, {entry->str_login, token});
+                all_branches = Func::Split(std::string(rq.begin(), rq.end()), '$');
+
+                for(auto x:all_branches)
+                {
+                    SPDLOG_INFO("Branch detected: {}", x);
+                }
+
                 rtn = 1;
+            }
+            else if(response == "INVALID_VALUE")
+            {
+                rtn = 100;
+                entry->str_login = "";
+                entry->str_password = "";
+                std::filesystem::remove("loginDetails.dat");
+            }
+            else
+            {
+                rtn = 101;
+                entry->str_login = "";
+                entry->str_password = "";
+                std::filesystem::remove("loginDetails.dat");
             }
 
             worked = true;
@@ -750,6 +811,20 @@ void Worker::listen()
             {
                 CoreManager::getInstance().getGlobals()->set(1, std::string(entry->str_login));
                 rtn = 2;
+            }
+            else if(response == "ALREADY_USED")
+            {
+                rtn = 102;
+                entry->str_login = "";
+                entry->str_email = "";
+                entry->str_password = "";
+            }
+            else
+            {
+                rtn = 101;
+                entry->str_login = "";
+                entry->str_email = "";
+                entry->str_password = "";
             }
 
             worked = true;

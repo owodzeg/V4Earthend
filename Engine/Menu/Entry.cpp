@@ -154,24 +154,6 @@ void Entry::init()
     background.setSize(sf::Vector2f(1280, 720));
     background.setFillColor(sf::Color(0,0,0,128));
 
-    h1.setPrimitiveType(sf::TriangleStrip);
-    h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 440), sf::Color(255,255,255,0)));
-    h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 440), sf::Color(255,255,255,0)));
-    h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 610), sf::Color(255,255,255,32)));
-    h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 610), sf::Color(255,255,255,32)));
-
-    h2.setPrimitiveType(sf::TriangleStrip);
-    h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 440), sf::Color(255,255,255,0)));
-    h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 440), sf::Color(255,255,255,0)));
-    h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 610), sf::Color(255,255,255,32)));
-    h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 610), sf::Color(255,255,255,32)));
-
-    h3.setPrimitiveType(sf::TriangleStrip);
-    h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
-    h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
-    h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
-    h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
-
     ib_login.load("resources/graphics/ui/inputbox.png");
     ib_email.load("resources/graphics/ui/inputbox.png");
     ib_password.load("resources/graphics/ui/inputbox.png");
@@ -268,8 +250,18 @@ void Entry::draw()
         pon_menu1.setAnimation("Units_Patapon_Idle_1");
         pon_menu2.setAnimation("Units_Patapon_Idle_1");
         pon_menu3.setAnimation("Units_Patapon_Idle_1");
+        pon_menu4.setAnimation("Units_Patapon_Idle_1");
 
-        a_state = 2;
+        std::ifstream lastLogin("loginDetails.dat");
+        if(lastLogin.good())
+        {
+            a_state = 3;
+            worker->setAction(Worker::LOGIN);
+        }
+        else
+        {
+            a_state = 2;
+        }
     }
 
     entry_camera.Work(window->getView());
@@ -392,40 +384,6 @@ void Entry::draw()
     // LOGIN
     if(a_state == 3)
     {
-        b_login.setFont(font);
-        b_login.setCharacterSize(36);
-        b_login.setStringKey("ln_button_login");
-        b_login.setOrigin(b_login.getLocalBounds().width/2, b_login.getLocalBounds().height/2);
-        b_login.setPosition(3840/2, 1400);
-        b_login.setColor(sf::Color::White);
-
-        b_goback.setFont(font);
-        b_goback.setCharacterSize(36);
-        b_goback.setStringKey("ln_settings_button2");
-        b_goback.setOrigin(b_goback.getLocalBounds().width/2, b_goback.getLocalBounds().height/2);
-        b_goback.setPosition(3840/2, 1540);
-        b_goback.setColor(sf::Color::White);
-
-        auto pos = b_login.getPosition();
-        auto bounds = b_login.getLocalBounds();
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
-        {
-            b_login.setColor(sf::Color::Green);
-
-            sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-            sword.setScale(1,1);
-            sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
-            sword.draw();
-            sword.setScale(-1,1);
-            sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
-            sword.draw();
-
-            if(mouseCtrl->getClick(0) && !worker->isBusy())
-            {
-                worker->setAction(Worker::LOGIN);
-            }
-        }
-
         if(!worker->isBusy() && worker->rtn == 1)
         {
             worker->rtn = -1;
@@ -443,176 +401,210 @@ void Entry::draw()
             background.setPosition(cam_placement+960, 0);
         }
 
-        pos = b_goback.getPosition();
-        bounds = b_goback.getLocalBounds();
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+        if(!worker->isBusy() && worker->rtn == 100)
         {
-            b_goback.setColor(sf::Color::Green);
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error1", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
 
-            sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-            sword.setScale(1,1);
-            sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
-            sword.draw();
-            sword.setScale(-1,1);
-            sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
-            sword.draw();
+            worker->rtn = -1;
+        }
 
-            if(mouseCtrl->getClick(0))
+        if(!worker->isBusy() && worker->rtn == 101)
+        {
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error3", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
+
+            worker->rtn = -1;
+        }
+
+        if(!worker->isBusy() && worker->rtn == 102)
+        {
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error5", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
+
+            worker->rtn = -1;
+        }
+
+        if(!worker->isBusy() && dialogboxes.size() == 0)
+        {
+            b_login.setFont(font);
+            b_login.setCharacterSize(36);
+            b_login.setStringKey("ln_button_login");
+            b_login.setOrigin(b_login.getLocalBounds().width/2, b_login.getLocalBounds().height/2);
+            b_login.setPosition(3840/2, 1400);
+            b_login.setColor(sf::Color::White);
+
+            b_goback.setFont(font);
+            b_goback.setCharacterSize(36);
+            b_goback.setStringKey("ln_settings_button2");
+            b_goback.setOrigin(b_goback.getLocalBounds().width/2, b_goback.getLocalBounds().height/2);
+            b_goback.setPosition(3840/2, 1540);
+            b_goback.setColor(sf::Color::White);
+
+            auto pos = b_login.getPosition();
+            auto bounds = b_login.getLocalBounds();
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
             {
-                a_state = 2;
+                b_login.setColor(sf::Color::Green);
+
+                sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+                sword.setScale(1,1);
+                sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
+                sword.draw();
+                sword.setScale(-1,1);
+                sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+                sword.draw();
+
+                if(mouseCtrl->getClick(0) && !worker->isBusy())
+                {
+                    worker->setAction(Worker::LOGIN);
+                }
             }
-        }
 
-        b_login.draw();
-        b_goback.draw();
+            pos = b_goback.getPosition();
+            bounds = b_goback.getLocalBounds();
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+            {
+                b_goback.setColor(sf::Color::Green);
 
-        ib_login.setOrigin(ib_login.getLocalBounds().width/2, ib_login.getLocalBounds().height/2);
-        ib_login.setPosition(3840/2, 1000);
-        ib_login.setColor(sf::Color::White);
-        if(whichInputBox == 0)
-        {
-            ib_login.setColor(sf::Color(222, 255, 227, 255));
-        }
-        ib_login.draw();
-        ib_password.setOrigin(ib_password.getLocalBounds().width/2, ib_password.getLocalBounds().height/2);
-        ib_password.setPosition(3840/2, 1220);
-        ib_password.setColor(sf::Color::White);
-        if(whichInputBox == 1)
-        {
-            ib_password.setColor(sf::Color(222, 255, 227, 255));
-        }
-        ib_password.draw();
+                sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+                sword.setScale(1,1);
+                sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
+                sword.draw();
+                sword.setScale(-1,1);
+                sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+                sword.draw();
 
-        sf::String cursor = "";
-        if(int(floor((a_clock.getElapsedTime().asSeconds()*2))) % 2 == 0)
-            cursor += "|";
+                if(mouseCtrl->getClick(0))
+                {
+                    a_state = 2;
+                }
+            }
 
-        auto inputCtrl = CoreManager::getInstance().getInputController();
-        auto textCtrl = CoreManager::getInstance().getTextInputController();
+            b_login.draw();
+            b_goback.draw();
 
-        if(inputCtrl->isKeyPressed(Input::Keys::UP))
-        {
-            whichInputBox = 0;
-            CoreManager::getInstance().getTextInputController()->latchOn(str_login);
+            ib_login.setOrigin(ib_login.getLocalBounds().width/2, ib_login.getLocalBounds().height/2);
+            ib_login.setPosition(3840/2, 1000);
+            ib_login.setColor(sf::Color::White);
+            if(whichInputBox == 0)
+            {
+                ib_login.setColor(sf::Color(222, 255, 227, 255));
+            }
+            ib_login.draw();
+            ib_password.setOrigin(ib_password.getLocalBounds().width/2, ib_password.getLocalBounds().height/2);
+            ib_password.setPosition(3840/2, 1220);
+            ib_password.setColor(sf::Color::White);
+            if(whichInputBox == 1)
+            {
+                ib_password.setColor(sf::Color(222, 255, 227, 255));
+            }
+            ib_password.draw();
 
-        }
-        if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
-        {
-            whichInputBox = 1;
-            CoreManager::getInstance().getTextInputController()->latchOn(str_password);
-        }
+            sf::String cursor = "";
+            if(int(floor((a_clock.getElapsedTime().asSeconds()*2))) % 2 == 0)
+                cursor += "|";
 
-        if(whichInputBox == 0)
-            CoreManager::getInstance().getTextInputController()->latchOn(str_login);
+            auto inputCtrl = CoreManager::getInstance().getInputController();
+            auto textCtrl = CoreManager::getInstance().getTextInputController();
 
-        if(whichInputBox == 1)
-            CoreManager::getInstance().getTextInputController()->latchOn(str_password);
-
-        ib_t_login.setFont(font);
-        ib_t_login.setCharacterSize(30);
-        ib_t_login.setString(str_login);
-        if(whichInputBox == 0)
-            ib_t_login.setString(str_login+cursor);
-        ib_t_login.setOrigin(0, ib_t_login.getLocalBounds().height/2);
-        ib_t_login.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 + 42, ib_login.getPosition().y - 12);
-        ib_t_login.setColor(sf::Color::White);
-        ib_t_login.draw();
-
-        sf::String password_hidden;
-        for(auto x:str_password)
-        {
-            password_hidden += "*";
-        }
-
-        ib_t_password.setFont(font);
-        ib_t_password.setCharacterSize(30);
-        ib_t_password.setString(password_hidden);
-        if(whichInputBox == 1)
-            ib_t_password.setString(password_hidden+cursor);
-        ib_t_password.setOrigin(0, ib_t_password.getLocalBounds().height/2);
-        ib_t_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 + 42, ib_password.getPosition().y - 12);
-        ib_t_password.setColor(sf::Color::White);
-        ib_t_password.draw();
-
-        sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-        sword.setScale(-1,1);
-        sword.setPosition(ib_login.getPosition().x + ib_login.getGlobalBounds().width/2 + 120 + swordOffset, ib_login.getPosition().y + 220*whichInputBox);
-        sword.draw();
-
-        pos = ib_login.getPosition();
-        bounds = ib_login.getLocalBounds();
-
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
-        {
-            if(mouseCtrl->getClick(0))
+            if(inputCtrl->isKeyPressed(Input::Keys::UP))
             {
                 whichInputBox = 0;
+                CoreManager::getInstance().getTextInputController()->latchOn(str_login);
+
             }
-        }
-
-        pos = ib_password.getPosition();
-        bounds = ib_password.getLocalBounds();
-
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
-        {
-            if(mouseCtrl->getClick(0))
+            if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
             {
                 whichInputBox = 1;
+                CoreManager::getInstance().getTextInputController()->latchOn(str_password);
             }
-        }
 
-        p_username.setFont(font);
-        p_username.setCharacterSize(26);
-        p_username.setStringKey("ln_username");
-        p_username.setOrigin(p_username.getLocalBounds().width, p_username.getLocalBounds().height/2);
-        p_username.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 - 42, ib_login.getPosition().y - 6);
-        p_username.setColor(sf::Color::White);
-        p_username.draw();
-        p_password.setFont(font);
-        p_password.setCharacterSize(26);
-        p_password.setStringKey("ln_password");
-        p_password.setOrigin(p_password.getLocalBounds().width, p_password.getLocalBounds().height/2);
-        p_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 - 42, ib_password.getPosition().y - 6);
-        p_password.setColor(sf::Color::White);
-        p_password.draw();
+            if(whichInputBox == 0)
+                CoreManager::getInstance().getTextInputController()->latchOn(str_login);
+
+            if(whichInputBox == 1)
+                CoreManager::getInstance().getTextInputController()->latchOn(str_password);
+
+            ib_t_login.setFont(font);
+            ib_t_login.setCharacterSize(30);
+            ib_t_login.setString(str_login);
+            if(whichInputBox == 0)
+                ib_t_login.setString(str_login+cursor);
+            ib_t_login.setOrigin(0, ib_t_login.getLocalBounds().height/2);
+            ib_t_login.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 + 42, ib_login.getPosition().y - 12);
+            ib_t_login.setColor(sf::Color::White);
+            ib_t_login.draw();
+
+            sf::String password_hidden;
+            for(auto x:str_password)
+            {
+                password_hidden += "*";
+            }
+
+            ib_t_password.setFont(font);
+            ib_t_password.setCharacterSize(30);
+            ib_t_password.setString(password_hidden);
+            if(whichInputBox == 1)
+                ib_t_password.setString(password_hidden+cursor);
+            ib_t_password.setOrigin(0, ib_t_password.getLocalBounds().height/2);
+            ib_t_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 + 42, ib_password.getPosition().y - 12);
+            ib_t_password.setColor(sf::Color::White);
+            ib_t_password.draw();
+
+            sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+            sword.setScale(-1,1);
+            sword.setPosition(ib_login.getPosition().x + ib_login.getGlobalBounds().width/2 + 120 + swordOffset, ib_login.getPosition().y + 220*whichInputBox);
+            sword.draw();
+
+            pos = ib_login.getPosition();
+            bounds = ib_login.getLocalBounds();
+
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
+            {
+                if(mouseCtrl->getClick(0))
+                {
+                    whichInputBox = 0;
+                }
+            }
+
+            pos = ib_password.getPosition();
+            bounds = ib_password.getLocalBounds();
+
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
+            {
+                if(mouseCtrl->getClick(0))
+                {
+                    whichInputBox = 1;
+                }
+            }
+
+            p_username.setFont(font);
+            p_username.setCharacterSize(26);
+            p_username.setStringKey("ln_username");
+            p_username.setOrigin(p_username.getLocalBounds().width, p_username.getLocalBounds().height/2);
+            p_username.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 - 42, ib_login.getPosition().y - 6);
+            p_username.setColor(sf::Color::White);
+            p_username.draw();
+            p_password.setFont(font);
+            p_password.setCharacterSize(26);
+            p_password.setStringKey("ln_password");
+            p_password.setOrigin(p_password.getLocalBounds().width, p_password.getLocalBounds().height/2);
+            p_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 - 42, ib_password.getPosition().y - 6);
+            p_password.setColor(sf::Color::White);
+            p_password.draw();
+        }
     }
 
     // REGISTER
     if(a_state == 4 && dialogboxes.size() == 0)
     {
-        b_register.setFont(font);
-        b_register.setCharacterSize(36);
-        b_register.setStringKey("ln_button_register");
-        b_register.setOrigin(b_register.getLocalBounds().width/2, b_register.getLocalBounds().height/2);
-        b_register.setPosition(3840/2, 1560);
-        b_register.setColor(sf::Color::White);
-
-        b_goback.setFont(font);
-        b_goback.setCharacterSize(36);
-        b_goback.setStringKey("ln_settings_button2");
-        b_goback.setOrigin(b_goback.getLocalBounds().width/2, b_goback.getLocalBounds().height/2);
-        b_goback.setPosition(3840/2, 1700);
-        b_goback.setColor(sf::Color::White);
-
-        auto pos = b_register.getPosition();
-        auto bounds = b_register.getLocalBounds();
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
-        {
-            b_register.setColor(sf::Color::Green);
-            sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-            sword.setScale(1,1);
-            sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
-            sword.draw();
-            sword.setScale(-1,1);
-            sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
-            sword.draw();
-
-            if(mouseCtrl->getClick(0) && !worker->isBusy())
-            {
-                worker->setAction(Worker::REGISTER);
-            }
-        }
-
         if(!worker->isBusy() && worker->rtn == 2)
         {
             worker->rtn = -1;
@@ -623,175 +615,241 @@ void Entry::draw()
             dialogboxes.push_back(newdb);
         }
 
-        pos = b_goback.getPosition();
-        bounds = b_goback.getLocalBounds();
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+        if(!worker->isBusy() && worker->rtn == 100)
         {
-            b_goback.setColor(sf::Color::Green);
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error1", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
+
+            worker->rtn = -1;
+        }
+
+        if(!worker->isBusy() && worker->rtn == 101)
+        {
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error3", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
+
+            worker->rtn = -1;
+        }
+
+        if(!worker->isBusy() && worker->rtn == 102)
+        {
+            PataDialogBox newdb;
+            newdb.Create(font, "ln_error5", {"ln_option_understood"}, 3, 2);
+            newdb.id = 4;
+            dialogboxes.push_back(newdb);
+
+            worker->rtn = -1;
+        }
+
+        if(!worker->isBusy())
+        {
+            b_register.setFont(font);
+            b_register.setCharacterSize(36);
+            b_register.setStringKey("ln_button_register");
+            b_register.setOrigin(b_register.getLocalBounds().width/2, b_register.getLocalBounds().height/2);
+            b_register.setPosition(3840/2, 1560);
+            b_register.setColor(sf::Color::White);
+
+            b_goback.setFont(font);
+            b_goback.setCharacterSize(36);
+            b_goback.setStringKey("ln_settings_button2");
+            b_goback.setOrigin(b_goback.getLocalBounds().width/2, b_goback.getLocalBounds().height/2);
+            b_goback.setPosition(3840/2, 1700);
+            b_goback.setColor(sf::Color::White);
+
+            auto pos = b_register.getPosition();
+            auto bounds = b_register.getLocalBounds();
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+            {
+                b_register.setColor(sf::Color::Green);
+                sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+                sword.setScale(1,1);
+                sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
+                sword.draw();
+                sword.setScale(-1,1);
+                sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+                sword.draw();
+
+                if(mouseCtrl->getClick(0) && !worker->isBusy())
+                {
+                    worker->setAction(Worker::REGISTER);
+                }
+            }
+
+            pos = b_goback.getPosition();
+            bounds = b_goback.getLocalBounds();
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+            {
+                b_goback.setColor(sf::Color::Green);
+                sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+                sword.setScale(1,1);
+                sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
+                sword.draw();
+                sword.setScale(-1,1);
+                sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+                sword.draw();
+
+                if(mouseCtrl->getClick(0))
+                {
+                    a_state = 2;
+                }
+            }
+
+            b_register.draw();
+            b_goback.draw();
+
+            ib_login.setOrigin(ib_login.getLocalBounds().width/2, ib_login.getLocalBounds().height/2);
+            ib_login.setPosition(3840/2, 900);
+            ib_login.setColor(sf::Color::White);
+            if(whichInputBox == 0)
+            {
+                ib_login.setColor(sf::Color(222, 255, 227, 255));
+            }
+            ib_login.draw();
+            ib_email.setOrigin(ib_email.getLocalBounds().width/2, ib_email.getLocalBounds().height/2);
+            ib_email.setPosition(3840/2, 1120);
+            ib_email.setColor(sf::Color::White);
+            if(whichInputBox == 1)
+            {
+                ib_email.setColor(sf::Color(222, 255, 227, 255));
+            }
+            ib_email.draw();
+            ib_password.setOrigin(ib_password.getLocalBounds().width/2, ib_password.getLocalBounds().height/2);
+            ib_password.setPosition(3840/2, 1340);
+            ib_password.setColor(sf::Color::White);
+            if(whichInputBox == 2)
+            {
+                ib_password.setColor(sf::Color(222, 255, 227, 255));
+            }
+            ib_password.draw();
+
             sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-            sword.setScale(1,1);
-            sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
-            sword.draw();
             sword.setScale(-1,1);
-            sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+            sword.setPosition(ib_login.getPosition().x + ib_login.getGlobalBounds().width/2 + 120 + swordOffset, ib_login.getPosition().y + 220*whichInputBox);
             sword.draw();
 
-            if(mouseCtrl->getClick(0))
+            sf::String cursor = "";
+            if(int(floor((a_clock.getElapsedTime().asSeconds()*2))) % 2 == 0)
+                cursor += "|";
+
+            auto inputCtrl = CoreManager::getInstance().getInputController();
+            auto textCtrl = CoreManager::getInstance().getTextInputController();
+
+            if(inputCtrl->isKeyPressed(Input::Keys::UP))
             {
-                a_state = 2;
+                if(whichInputBox>0)
+                    whichInputBox--;
             }
-        }
-
-        b_register.draw();
-        b_goback.draw();
-
-        ib_login.setOrigin(ib_login.getLocalBounds().width/2, ib_login.getLocalBounds().height/2);
-        ib_login.setPosition(3840/2, 900);
-        ib_login.setColor(sf::Color::White);
-        if(whichInputBox == 0)
-        {
-            ib_login.setColor(sf::Color(222, 255, 227, 255));
-        }
-        ib_login.draw();
-        ib_email.setOrigin(ib_email.getLocalBounds().width/2, ib_email.getLocalBounds().height/2);
-        ib_email.setPosition(3840/2, 1120);
-        ib_email.setColor(sf::Color::White);
-        if(whichInputBox == 1)
-        {
-            ib_email.setColor(sf::Color(222, 255, 227, 255));
-        }
-        ib_email.draw();
-        ib_password.setOrigin(ib_password.getLocalBounds().width/2, ib_password.getLocalBounds().height/2);
-        ib_password.setPosition(3840/2, 1340);
-        ib_password.setColor(sf::Color::White);
-        if(whichInputBox == 2)
-        {
-            ib_password.setColor(sf::Color(222, 255, 227, 255));
-        }
-        ib_password.draw();
-
-        sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
-        sword.setScale(-1,1);
-        sword.setPosition(ib_login.getPosition().x + ib_login.getGlobalBounds().width/2 + 120 + swordOffset, ib_login.getPosition().y + 220*whichInputBox);
-        sword.draw();
-
-        sf::String cursor = "";
-        if(int(floor((a_clock.getElapsedTime().asSeconds()*2))) % 2 == 0)
-            cursor += "|";
-
-        auto inputCtrl = CoreManager::getInstance().getInputController();
-        auto textCtrl = CoreManager::getInstance().getTextInputController();
-
-        if(inputCtrl->isKeyPressed(Input::Keys::UP))
-        {
-            if(whichInputBox>0)
-            whichInputBox--;
-        }
-        if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
-        {
-            if(whichInputBox<2)
-            whichInputBox++;
-        }
-
-        if(whichInputBox == 0)
-            CoreManager::getInstance().getTextInputController()->latchOn(str_login);
-
-        if(whichInputBox == 1)
-            CoreManager::getInstance().getTextInputController()->latchOn(str_email);
-
-        if(whichInputBox == 2)
-            CoreManager::getInstance().getTextInputController()->latchOn(str_password);
-
-        ib_t_login.setFont(font);
-        ib_t_login.setCharacterSize(30);
-        ib_t_login.setString(str_login);
-        if(whichInputBox == 0)
-            ib_t_login.setString(str_login+cursor);
-        ib_t_login.setOrigin(0, ib_t_login.getLocalBounds().height/2);
-        ib_t_login.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 + 42, ib_login.getPosition().y - 12);
-        ib_t_login.setColor(sf::Color::White);
-        ib_t_login.draw();
-
-        ib_t_email.setFont(font);
-        ib_t_email.setCharacterSize(30);
-        ib_t_email.setString(str_email);
-        if(whichInputBox == 1)
-            ib_t_email.setString(str_email+cursor);
-        ib_t_email.setOrigin(0, ib_t_email.getLocalBounds().height/2);
-        ib_t_email.setPosition(ib_email.getPosition().x - ib_email.getLocalBounds().width/2 + 42, ib_email.getPosition().y - 12);
-        ib_t_email.setColor(sf::Color::White);
-        ib_t_email.draw();
-
-        sf::String password_hidden;
-        for(auto x:str_password)
-        {
-            password_hidden += "*";
-        }
-
-        ib_t_password.setFont(font);
-        ib_t_password.setCharacterSize(30);
-        ib_t_password.setString(password_hidden);
-        if(whichInputBox == 2)
-            ib_t_password.setString(password_hidden+cursor);
-        ib_t_password.setOrigin(0, ib_t_password.getLocalBounds().height/2);
-        ib_t_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 + 42, ib_password.getPosition().y - 12);
-        ib_t_password.setColor(sf::Color::White);
-        ib_t_password.draw();
-
-        pos = ib_login.getPosition();
-        bounds = ib_login.getLocalBounds();
-
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
-        {
-            if(mouseCtrl->getClick(0))
+            if(inputCtrl->isKeyPressed(Input::Keys::DOWN) || textCtrl->sendSpecial() == 1)
             {
-                whichInputBox = 0;
+                if(whichInputBox<2)
+                    whichInputBox++;
             }
-        }
 
-        pos = ib_email.getPosition();
-        bounds = ib_email.getLocalBounds();
+            if(whichInputBox == 0)
+                CoreManager::getInstance().getTextInputController()->latchOn(str_login);
 
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
-        {
-            if(mouseCtrl->getClick(0))
+            if(whichInputBox == 1)
+                CoreManager::getInstance().getTextInputController()->latchOn(str_email);
+
+            if(whichInputBox == 2)
+                CoreManager::getInstance().getTextInputController()->latchOn(str_password);
+
+            ib_t_login.setFont(font);
+            ib_t_login.setCharacterSize(30);
+            ib_t_login.setString(str_login);
+            if(whichInputBox == 0)
+                ib_t_login.setString(str_login+cursor);
+            ib_t_login.setOrigin(0, ib_t_login.getLocalBounds().height/2);
+            ib_t_login.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 + 42, ib_login.getPosition().y - 12);
+            ib_t_login.setColor(sf::Color::White);
+            ib_t_login.draw();
+
+            ib_t_email.setFont(font);
+            ib_t_email.setCharacterSize(30);
+            ib_t_email.setString(str_email);
+            if(whichInputBox == 1)
+                ib_t_email.setString(str_email+cursor);
+            ib_t_email.setOrigin(0, ib_t_email.getLocalBounds().height/2);
+            ib_t_email.setPosition(ib_email.getPosition().x - ib_email.getLocalBounds().width/2 + 42, ib_email.getPosition().y - 12);
+            ib_t_email.setColor(sf::Color::White);
+            ib_t_email.draw();
+
+            sf::String password_hidden;
+            for(auto x:str_password)
             {
-                whichInputBox = 1;
+                password_hidden += "*";
             }
-        }
 
-        pos = ib_password.getPosition();
-        bounds = ib_password.getLocalBounds();
+            ib_t_password.setFont(font);
+            ib_t_password.setCharacterSize(30);
+            ib_t_password.setString(password_hidden);
+            if(whichInputBox == 2)
+                ib_t_password.setString(password_hidden+cursor);
+            ib_t_password.setOrigin(0, ib_t_password.getLocalBounds().height/2);
+            ib_t_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 + 42, ib_password.getPosition().y - 12);
+            ib_t_password.setColor(sf::Color::White);
+            ib_t_password.draw();
 
-        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
-        {
-            if(mouseCtrl->getClick(0))
+            pos = ib_login.getPosition();
+            bounds = ib_login.getLocalBounds();
+
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
             {
-                whichInputBox = 2;
+                if(mouseCtrl->getClick(0))
+                {
+                    whichInputBox = 0;
+                }
             }
-        }
 
-        p_username.setFont(font);
-        p_username.setCharacterSize(26);
-        p_username.setStringKey("ln_username");
-        p_username.setOrigin(p_username.getLocalBounds().width, p_username.getLocalBounds().height/2);
-        p_username.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 - 30, ib_login.getPosition().y - 6);
-        p_username.setColor(sf::Color::White);
-        p_username.draw();
-        p_email.setFont(font);
-        p_email.setCharacterSize(26);
-        p_email.setStringKey("ln_email");
-        p_email.setOrigin(p_email.getLocalBounds().width, p_email.getLocalBounds().height/2);
-        p_email.setPosition(ib_email.getPosition().x - ib_email.getLocalBounds().width/2 - 30, ib_email.getPosition().y - 6);
-        p_email.setColor(sf::Color::White);
-        p_email.draw();
-        p_password.setFont(font);
-        p_password.setCharacterSize(26);
-        p_password.setStringKey("ln_password");
-        p_password.setOrigin(p_password.getLocalBounds().width, p_password.getLocalBounds().height/2);
-        p_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 - 30, ib_password.getPosition().y - 6);
-        p_password.setColor(sf::Color::White);
-        p_password.draw();
+            pos = ib_email.getPosition();
+            bounds = ib_email.getLocalBounds();
+
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
+            {
+                if(mouseCtrl->getClick(0))
+                {
+                    whichInputBox = 1;
+                }
+            }
+
+            pos = ib_password.getPosition();
+            bounds = ib_password.getLocalBounds();
+
+            if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y - bounds.height/2 && mouse.y < pos.y + bounds.height/2)
+            {
+                if(mouseCtrl->getClick(0))
+                {
+                    whichInputBox = 2;
+                }
+            }
+
+            p_username.setFont(font);
+            p_username.setCharacterSize(26);
+            p_username.setStringKey("ln_username");
+            p_username.setOrigin(p_username.getLocalBounds().width, p_username.getLocalBounds().height/2);
+            p_username.setPosition(ib_login.getPosition().x - ib_login.getLocalBounds().width/2 - 30, ib_login.getPosition().y - 6);
+            p_username.setColor(sf::Color::White);
+            p_username.draw();
+            p_email.setFont(font);
+            p_email.setCharacterSize(26);
+            p_email.setStringKey("ln_email");
+            p_email.setOrigin(p_email.getLocalBounds().width, p_email.getLocalBounds().height/2);
+            p_email.setPosition(ib_email.getPosition().x - ib_email.getLocalBounds().width/2 - 30, ib_email.getPosition().y - 6);
+            p_email.setColor(sf::Color::White);
+            p_email.draw();
+            p_password.setFont(font);
+            p_password.setCharacterSize(26);
+            p_password.setStringKey("ln_password");
+            p_password.setOrigin(p_password.getLocalBounds().width, p_password.getLocalBounds().height/2);
+            p_password.setPosition(ib_password.getPosition().x - ib_password.getLocalBounds().width/2 - 30, ib_password.getPosition().y - 6);
+            p_password.setColor(sf::Color::White);
+            p_password.draw();
+        }
     }
 
     if(a_state <= 4)
@@ -819,6 +877,27 @@ void Entry::draw()
 
     if(a_state == 10)
     {
+        h1.clear();
+        h1.setPrimitiveType(sf::TriangleStrip);
+        h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 440), sf::Color(255,255,255,0)));
+        h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 440), sf::Color(255,255,255,0)));
+        h1.append(sf::Vertex(sf::Vector2f(273+cam_placement, 610), sf::Color(255,255,255,32)));
+        h1.append(sf::Vertex(sf::Vector2f(460+cam_placement, 610), sf::Color(255,255,255,32)));
+
+        h2.clear();
+        h2.setPrimitiveType(sf::TriangleStrip);
+        h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 440), sf::Color(255,255,255,0)));
+        h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 440), sf::Color(255,255,255,0)));
+        h2.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217, 610), sf::Color(255,255,255,32)));
+        h2.append(sf::Vertex(sf::Vector2f(460+cam_placement + 217, 610), sf::Color(255,255,255,32)));
+
+        h3.clear();
+        h3.setPrimitiveType(sf::TriangleStrip);
+        h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
+        h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 440), sf::Color(255,255,255,0)));
+        h3.append(sf::Vertex(sf::Vector2f(272+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
+        h3.append(sf::Vertex(sf::Vector2f(459+cam_placement + 217 + 217, 610), sf::Color(255,255,255,32)));
+
         window->draw(background);
 
         logo.setOrigin(logo.getGlobalBounds().width/2, logo.getGlobalBounds().height/2);
@@ -835,12 +914,55 @@ void Entry::draw()
                 a_state = 11;
             }
         }
-        if(mouse.x > 1100+650-pedestal.getGlobalBounds().width/2 && mouse.x < 1100+650+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        if(mouse.x > 1100+650-pedestal.getGlobalBounds().width/2 && mouse.x < 1100+680+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
         {
             p_active = 2;
             if(mouseCtrl->getClick(0))
             {
-                a_state = 20;
+                a_state = 16;
+
+                cam_placement = 15000;
+
+                pon_menu1.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323, 1310));
+                pon_menu2.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710, 1310));
+                pon_menu3.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*2, 1310));
+                pon_menu4.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*3, 1310));
+                pon_menu5.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*4, 1310));
+
+                MessageCloud tmp1;
+                tmp1.setFontSize(20);
+                tmp1.Create(20, sf::Vector2f(pon_menu1.getGlobalPosition().x+280, pon_menu1.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
+                tmp1.msgcloud_ID = 0;
+                tmp1.AddDialog("ln_settings1", true);
+                messageclouds.push_back(tmp1);
+
+                MessageCloud tmp2;
+                tmp2.setFontSize(20);
+                tmp2.Create(20, sf::Vector2f(pon_menu2.getGlobalPosition().x+260, pon_menu2.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
+                tmp2.msgcloud_ID = 1;
+                tmp2.AddDialog("ln_settings2", true);
+                messageclouds.push_back(tmp2);
+
+                MessageCloud tmp3;
+                tmp3.setFontSize(20);
+                tmp3.Create(20, sf::Vector2f(pon_menu3.getGlobalPosition().x+260, pon_menu3.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
+                tmp3.msgcloud_ID = 2;
+                tmp3.AddDialog("ln_settings5", true);
+                messageclouds.push_back(tmp3);
+
+                MessageCloud tmp4;
+                tmp4.setFontSize(20);
+                tmp4.Create(20, sf::Vector2f(pon_menu4.getGlobalPosition().x+240, pon_menu4.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
+                tmp4.msgcloud_ID = 3;
+                tmp4.AddDialog("ln_settings4", true);
+                messageclouds.push_back(tmp4);
+
+                MessageCloud tmp5;
+                tmp5.setFontSize(20);
+                tmp5.Create(20, sf::Vector2f(pon_menu5.getGlobalPosition().x+220, pon_menu5.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
+                tmp5.msgcloud_ID = 4;
+                tmp5.AddDialog("fr_back", true);
+                messageclouds.push_back(tmp5);
             }
         }
         if(mouse.x > 1100+650+650-pedestal.getGlobalBounds().width/2 && mouse.x < 1100+650+650+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
@@ -984,7 +1106,7 @@ void Entry::draw()
         a_state = 13;
     }
 
-    if(a_state >= 11)
+    if(a_state >= 11 && a_state <= 15)
     {
         logo.setOrigin(logo.getGlobalBounds().width/2, logo.getGlobalBounds().height/2);
         logo.setPosition(logo_x_c, logo_y_c);
@@ -1099,6 +1221,278 @@ void Entry::draw()
         a_state = 15;
     }
 
+    // SETTINGS!!!
+    if(a_state == 16)
+    {
+        h1.clear();
+        h1.setPrimitiveType(sf::TriangleStrip);
+        h1.append(sf::Vertex(sf::Vector2f(76+cam_placement, 440), sf::Color(255,255,255,0)));
+        h1.append(sf::Vertex(sf::Vector2f(263+cam_placement, 440), sf::Color(255,255,255,0)));
+        h1.append(sf::Vertex(sf::Vector2f(76+cam_placement, 610), sf::Color(255,255,255,32)));
+        h1.append(sf::Vertex(sf::Vector2f(263+cam_placement, 610), sf::Color(255,255,255,32)));
+
+        h2.clear();
+        h2.setPrimitiveType(sf::TriangleStrip);
+        h2.append(sf::Vertex(sf::Vector2f(74+cam_placement + 236, 440), sf::Color(255,255,255,0)));
+        h2.append(sf::Vertex(sf::Vector2f(262+cam_placement + 236, 440), sf::Color(255,255,255,0)));
+        h2.append(sf::Vertex(sf::Vector2f(74+cam_placement + 236, 610), sf::Color(255,255,255,32)));
+        h2.append(sf::Vertex(sf::Vector2f(262+cam_placement + 236, 610), sf::Color(255,255,255,32)));
+
+        h3.clear();
+        h3.setPrimitiveType(sf::TriangleStrip);
+        h3.append(sf::Vertex(sf::Vector2f(75+cam_placement + 236*2, 440), sf::Color(255,255,255,0)));
+        h3.append(sf::Vertex(sf::Vector2f(262+cam_placement + 236*2, 440), sf::Color(255,255,255,0)));
+        h3.append(sf::Vertex(sf::Vector2f(75+cam_placement + 236*2, 610), sf::Color(255,255,255,32)));
+        h3.append(sf::Vertex(sf::Vector2f(262+cam_placement + 236*2, 610), sf::Color(255,255,255,32)));
+
+        h4.clear();
+        h4.setPrimitiveType(sf::TriangleStrip);
+        h4.append(sf::Vertex(sf::Vector2f(76+cam_placement + 236*3, 440), sf::Color(255,255,255,0)));
+        h4.append(sf::Vertex(sf::Vector2f(263+cam_placement + 236*3, 440), sf::Color(255,255,255,0)));
+        h4.append(sf::Vertex(sf::Vector2f(76+cam_placement + 236*3, 610), sf::Color(255,255,255,32)));
+        h4.append(sf::Vertex(sf::Vector2f(263+cam_placement + 236*3, 610), sf::Color(255,255,255,32)));
+
+        h5.clear();
+        h5.setPrimitiveType(sf::TriangleStrip);
+        h5.append(sf::Vertex(sf::Vector2f(77+cam_placement + 236*4, 440), sf::Color(255,255,255,0)));
+        h5.append(sf::Vertex(sf::Vector2f(264+cam_placement + 236*4, 440), sf::Color(255,255,255,0)));
+        h5.append(sf::Vertex(sf::Vector2f(77+cam_placement + 236*4, 610), sf::Color(255,255,255,32)));
+        h5.append(sf::Vertex(sf::Vector2f(264+cam_placement + 236*4, 610), sf::Color(255,255,255,32)));
+
+        bg_camera.debug_x_dest = cam_placement;
+        entry_camera.debug_x_dest = cam_placement;
+
+        p_active = 0;
+
+        if(mouse.x > 503-pedestal.getGlobalBounds().width/2 && mouse.x < 503+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        {
+            p_active = 1;
+            if(mouseCtrl->getClick(0))
+            {
+                a_state = 11;
+            }
+        }
+        if(mouse.x > 503+710-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        {
+            p_active = 2;
+            if(mouseCtrl->getClick(0))
+            {
+                a_state = 16;
+            }
+        }
+        if(mouse.x > 503+710*2-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*2+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        {
+            p_active = 3;
+            if(mouseCtrl->getClick(0))
+            {
+                CoreManager::getInstance().getCore()->close_window = true;
+            }
+        }
+        if(mouse.x > 503+710*3-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*3+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        {
+            p_active = 4;
+            if(mouseCtrl->getClick(0))
+            {
+                str_login = "";
+                str_email = "";
+                str_password = "";
+                worker->token = "";
+                bg_camera.debug_x_dest = 0;
+                entry_camera.debug_x_dest = 0;
+                logo_x_d = 3840/2;
+                logo_y_d = 2160/2;
+                logo_y_d -= 600;
+
+                logo_x_c = logo_x_d;
+                logo_y_c = logo_y_d;
+                a_state = 2;
+
+                auto now = std::chrono::system_clock::now();
+                std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+                std::tm* localTime = std::localtime(&currentTime);
+
+                pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 220, 1590));
+
+                messageclouds.clear();
+
+                if(localTime->tm_hour >= 5 && localTime->tm_hour <= 8)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting1", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 9 && localTime->tm_hour <= 16)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting2", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 17 && localTime->tm_hour <= 19)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting3", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 20 && localTime->tm_hour <= 22)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+360, pon_greet.getGlobalPosition().y), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting4", true);
+                    messageclouds.push_back(tmp);
+                }
+
+                if(localTime->tm_hour >= 23 || localTime->tm_hour <= 4)
+                {
+                    MessageCloud tmp;
+                    tmp.Create(20, sf::Vector2f(pon_greet.getGlobalPosition().x+320, pon_greet.getGlobalPosition().y+45), sf::Color(255, 255, 255, 255), false, 3);
+                    tmp.msgcloud_ID = 0;
+                    tmp.AddDialog("ln_greeting5", true);
+                    messageclouds.push_back(tmp);
+
+                    pon_greet.setAnimationSpeed(0); // workaround for lack of animation stalling
+                    pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 230, 1612));
+                }
+            }
+        }
+        if(mouse.x > 503+710*4-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*4+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
+        {
+            p_active = 5;
+            if(mouseCtrl->getClick(0))
+            {
+                a_state = 10;
+                cam_placement = 29500;
+
+                bg_camera.debug_x_dest = cam_placement;
+                entry_camera.debug_x_dest = cam_placement;
+
+                logo_x_d = cam_placement*3 + 1425;
+                logo_y_d = 460;
+                logo_x_c = logo_x_d;
+                logo_y_c = logo_y_d;
+
+                background.setSize(sf::Vector2f(322, 720));
+                background.setPosition(cam_placement+960, 0);
+
+                messageclouds.clear();
+            }
+        }
+
+        if(p_active == 1)
+        {
+            window->draw(h1);
+        }
+        if(p_active == 2)
+        {
+            window->draw(h2);
+        }
+        if(p_active == 3)
+        {
+            window->draw(h3);
+        }
+        if(p_active == 4)
+        {
+            window->draw(h4);
+        }
+        if(p_active == 5)
+        {
+            window->draw(h5);
+        }
+
+        pedestal.setOrigin(pedestal.getGlobalBounds().width/2, pedestal.getGlobalBounds().height);
+        pedestal.setPosition(cam_placement*3 + 503, 1860);
+        pedestal.setColor(sf::Color::White);
+        if(p_active == 1) { pedestal.setColor(sf::Color(255, 197, 31)); }
+        pedestal.draw();
+        pedestal.setPosition(cam_placement*3 + 503 + 710, 1860);
+        pedestal.setColor(sf::Color::White);
+        if(p_active == 2) { pedestal.setColor(sf::Color(255, 197, 31)); }
+        pedestal.draw();
+        pedestal.setPosition(cam_placement*3 + 503 + 710 * 2, 1860);
+        pedestal.setColor(sf::Color::White);
+        if(p_active == 3) { pedestal.setColor(sf::Color(255, 197, 31)); }
+        pedestal.draw();
+        pedestal.setPosition(cam_placement*3 + 503 + 710 * 3, 1860);
+        pedestal.setColor(sf::Color::White);
+        if(p_active == 4) { pedestal.setColor(sf::Color(255, 197, 31)); }
+        pedestal.draw();
+        pedestal.setPosition(cam_placement*3 + 503 + 710 * 4, 1860);
+        pedestal.setColor(sf::Color::White);
+        if(p_active == 5) { pedestal.setColor(sf::Color(255, 197, 31)); }
+        pedestal.draw();
+
+        pon_menu1.setAnimation("Units_Patapon_Idle_1");
+        pon_menu2.setAnimation("Units_Patapon_Idle_1");
+        pon_menu3.setAnimation("Units_Patapon_Idle_1");
+        pon_menu4.setAnimation("Units_Patapon_Idle_1");
+        pon_menu5.setAnimation("Units_Patapon_Idle_1");
+        pon_menu1.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323, 1310));
+        pon_menu2.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710, 1310));
+        pon_menu3.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*2, 1310));
+        pon_menu4.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*3, 1310));
+        pon_menu5.setGlobalPosition(sf::Vector2f(cam_placement*3 + 323 + 710*4, 1310));
+
+        if(p_active == 1)
+        {
+            pon_menu1.setAnimation("Units_Patapon_Walk");
+            pon_menu1.setGlobalPosition(sf::Vector2f(cam_placement*3 + 371, 1364));
+        }
+        if(p_active == 2)
+        {
+            pon_menu2.setAnimation("Units_Patapon_Walk");
+            pon_menu2.setGlobalPosition(sf::Vector2f(cam_placement*3 + 371 + 710, 1364));
+        }
+        if(p_active == 3)
+        {
+            pon_menu3.setAnimation("Units_Patapon_Walk");
+            pon_menu3.setGlobalPosition(sf::Vector2f(cam_placement*3 + 371 + 710*2, 1364));
+        }
+        if(p_active == 4)
+        {
+            pon_menu4.setAnimation("Units_Patapon_Walk");
+            pon_menu4.setGlobalPosition(sf::Vector2f(cam_placement*3 + 371 + 710*3, 1364));
+        }
+        if(p_active == 5)
+        {
+            pon_menu5.setAnimation("Units_Patapon_Walk");
+            pon_menu5.setGlobalPosition(sf::Vector2f(cam_placement*3 + 371 + 710*4, 1364));
+        }
+
+        pon_menu1.Draw();
+        pon_menu2.Draw();
+        pon_menu3.Draw();
+        pon_menu4.Draw();
+        pon_menu5.Draw();
+
+        std::vector<int> m_rm;
+
+        for (unsigned long i = 0; i < messageclouds.size(); i++)
+        {
+            if (messageclouds[i].firstrender)
+                messageclouds[i].Show();
+
+            messageclouds[i].Draw();
+
+            if ((!messageclouds[i].active) && (messageclouds[i].done))
+                m_rm.push_back(i);
+        }
+
+        for (unsigned long i = 0; i < m_rm.size(); i++)
+        {
+            SPDLOG_DEBUG("Erasing MessageCloud id {}", m_rm[i]);
+            messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
+        }
+    }
+
     std::vector<int> db_e; ///dialog box erase
 
     auto view = window->getView();
@@ -1177,6 +1571,11 @@ void Entry::draw()
                         worker->setAction(Worker::DOWNLOAD_HERO);
 
                         a_state = 13;
+                    }
+
+                    if (dialogboxes[dialogboxes.size() - 1].id == 4)
+                    {
+                        dialogboxes[dialogboxes.size() - 1].Close();
                     }
 
                     break;

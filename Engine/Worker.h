@@ -71,6 +71,12 @@ public:
 
     bool downloadStarted = false;
 
+    std::string token = "";
+    int token_expire = 0;
+
+    bool isSupporter = false;
+    std::vector<std::string> all_branches;
+
     Worker();
     void platformSpecific();
     void init();
