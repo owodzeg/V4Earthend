@@ -75,7 +75,7 @@ public:
     int token_expire = 0;
 
     bool isSupporter = false;
-    std::vector<std::string> all_branches;
+    std::vector<std::string> all_branches = {"main"};
 
     Worker();
     void platformSpecific();
