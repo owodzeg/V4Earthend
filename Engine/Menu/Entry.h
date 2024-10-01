@@ -70,6 +70,8 @@ public:
   PText prog_main;
   PText prog_supp;
 
+  std::unordered_map<std::string, PText> flagnames;
+
   void init();
   void draw();
 };

@@ -272,7 +272,7 @@ void Entry::draw()
     if(a_state == 0)
         debugtext.draw();
 
-    if(a_state >= 2 && a_state <= 4)
+    if((a_state >= 2 && a_state <= 4) || a_state == 17)
     {
         swordOffset += 10 * speed_delta;
         if(swordOffset > 20)
@@ -932,35 +932,35 @@ void Entry::draw()
                 messageclouds.clear();
 
                 MessageCloud tmp1;
-                tmp1.setFontSize(20);
+                tmp1.setFontSize(18);
                 tmp1.Create(20, sf::Vector2f(pon_menu1.getGlobalPosition().x+280, pon_menu1.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
                 tmp1.msgcloud_ID = 0;
                 tmp1.AddDialog("ln_settings1", true);
                 messageclouds.push_back(tmp1);
 
                 MessageCloud tmp2;
-                tmp2.setFontSize(20);
+                tmp2.setFontSize(18);
                 tmp2.Create(20, sf::Vector2f(pon_menu2.getGlobalPosition().x+260, pon_menu2.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
                 tmp2.msgcloud_ID = 1;
                 tmp2.AddDialog("ln_settings2", true);
                 messageclouds.push_back(tmp2);
 
                 MessageCloud tmp3;
-                tmp3.setFontSize(20);
+                tmp3.setFontSize(18);
                 tmp3.Create(20, sf::Vector2f(pon_menu3.getGlobalPosition().x+260, pon_menu3.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
                 tmp3.msgcloud_ID = 2;
                 tmp3.AddDialog("ln_settings5", true);
                 messageclouds.push_back(tmp3);
 
                 MessageCloud tmp4;
-                tmp4.setFontSize(20);
+                tmp4.setFontSize(18);
                 tmp4.Create(20, sf::Vector2f(pon_menu4.getGlobalPosition().x+240, pon_menu4.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
                 tmp4.msgcloud_ID = 3;
                 tmp4.AddDialog("ln_settings4", true);
                 messageclouds.push_back(tmp4);
 
                 MessageCloud tmp5;
-                tmp5.setFontSize(20);
+                tmp5.setFontSize(18);
                 tmp5.Create(20, sf::Vector2f(pon_menu5.getGlobalPosition().x+220, pon_menu5.getGlobalPosition().y+30), sf::Color(255, 255, 255, 255), false, 3);
                 tmp5.msgcloud_ID = 4;
                 tmp5.AddDialog("fr_back", true);
@@ -1299,6 +1299,7 @@ void Entry::draw()
             if(mouseCtrl->getClick(0))
             {
                 // CHANGE LANGUAGE
+                a_state = 17;
             }
         }
         if(mouse.x > 503+710*3-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*3+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
@@ -1560,6 +1561,96 @@ void Entry::draw()
             SPDLOG_DEBUG("Erasing MessageCloud id {}", m_rm[i]);
             messageclouds.erase(messageclouds.begin() + m_rm[i] - i);
         }
+    }
+
+    if(a_state == 17)
+    {
+        auto langs = strRepo->GetAvailableLanguages();
+        int f = 0;
+
+        bool hover = false;
+        mouse.x += cam_placement*3;
+
+        for(auto lang : langs)
+        {
+            auto flag = ResourceManager::getInstance().getSprite("resources/lang/"+lang.first+"/"+lang.first+".png");
+            int row = floor(f/6);
+            int col = f % 6;
+
+            auto name = Func::ConvertToUtf8String(lang.second);
+
+            flag.setPosition(cam_placement*3 + 260 + col * 600, 100 + row * 400);
+            flag.draw();
+
+            auto font = strRepo->GetFontNameForLanguage(lang.first);
+
+            flagnames[lang.first].setFont(font);
+            flagnames[lang.first].setTextQuality(3);
+            flagnames[lang.first].setCharacterSize(28);
+
+            if(lang.first == strRepo->GetCurrentLanguage())
+                flagnames[lang.first].setString("{color 0 192 0}"+name);
+            else
+                flagnames[lang.first].setString("{color 255 255 255}"+name);
+
+            flagnames[lang.first].setOrigin(flagnames[lang.first].getLocalBounds().width/2, flagnames[lang.first].getLocalBounds().height/2);
+            flagnames[lang.first].setPosition(flag.getPosition().x+150, flag.getPosition().y+240);
+
+            f++;
+
+            auto pos = flag.getPosition();
+            auto lb = flag.getLocalBounds();
+
+            auto tpos = flagnames[lang.first].getPosition();
+            auto tlb = flagnames[lang.first].getLocalBounds();
+
+            if(((mouse.x > pos.x) && (mouse.x < pos.x + lb.width) && (mouse.y > pos.y) && (mouse.y < pos.y + lb.height)) || ((mouse.x > tpos.x - tlb.width/2) && (mouse.x < tpos.x + tlb.width/2) && (mouse.y > tpos.y - tlb.height/2) && (mouse.y < tpos.y + tlb.height/2)))
+            {
+                hover = true;
+
+                flagnames[lang.first].setString("{color 255 192 64}"+name);
+
+                if(mouseCtrl->getClick(0))
+                {
+                    strRepo->SetCurrentLanguage(lang.first);
+                }
+            }
+
+            flagnames[lang.first].draw();
+        }
+
+        b_goback.setFont(font);
+        b_goback.setCharacterSize(36);
+        b_goback.setStringKey("ln_settings_button2");
+        b_goback.setOrigin(b_goback.getLocalBounds().width/2, b_goback.getLocalBounds().height/2);
+        b_goback.setPosition(cam_placement*3 + 3840/2, 1540);
+        b_goback.setColor(sf::Color::White);
+
+        auto pos = b_goback.getPosition();
+        auto bounds = b_goback.getLocalBounds();
+        if(mouse.x > pos.x-bounds.width/2 && mouse.x < pos.x+bounds.width/2 && mouse.y > pos.y-bounds.height/2 && mouse.y < pos.y+bounds.height/2)
+        {
+            b_goback.setColor(sf::Color::Green);
+
+            sword.setOrigin(sword.getGlobalBounds().width/2, sword.getGlobalBounds().height/2);
+            sword.setScale(1,1);
+            sword.setPosition(pos.x - bounds.width/2 - 130 - swordOffset, pos.y + 30);
+            sword.draw();
+            sword.setScale(-1,1);
+            sword.setPosition(pos.x + bounds.width/2 + 130 + swordOffset, pos.y + 30);
+            sword.draw();
+
+            if(mouseCtrl->getClick(0))
+            {
+                a_state = 16;
+
+                std::ofstream langFile("resources/lang.txt", std::ios::trunc);
+                langFile << strRepo->GetCurrentLanguage();
+                langFile.close();
+            }
+        }
+
+        b_goback.draw();
     }
 
     std::vector<int> db_e; ///dialog box erase
