@@ -100,7 +100,7 @@ void MessageCloud::Show()
         dialogue_ptext.draw();
         visual_ptext.draw();
 
-        dest_xsize = visual_ptext.getLocalBounds().width + 150 + (visual_ptext.getLocalBounds().width / 30);
+        dest_xsize = visual_ptext.getLocalBounds().width + 120 + (visual_ptext.getLocalBounds().width / 30);
         dest_ysize = visual_ptext.getLocalBounds().height + 150 + (visual_ptext.getLocalBounds().height / 4.5);
 
         text_timeout.restart();
@@ -142,7 +142,7 @@ void MessageCloud::NextDialog()
         dialogue_ptext.draw();
         visual_ptext.draw();
 
-        dest_xsize = visual_ptext.getLocalBounds().width + 150 + (visual_ptext.getLocalBounds().width / 30);
+        dest_xsize = visual_ptext.getLocalBounds().width + 120 + (visual_ptext.getLocalBounds().width / 30);
         dest_ysize = visual_ptext.getLocalBounds().height + 150 + (visual_ptext.getLocalBounds().height / 4.5);
 
         text_timeout.restart();
@@ -169,33 +169,24 @@ void MessageCloud::Draw()
 {
     sf::RenderWindow* window = CoreManager::getInstance().getWindow();
     InputController* inputCtrl = CoreManager::getInstance().getInputController();
+    StringRepository* strRepo = CoreManager::getInstance().getStrRepo();
     float fps = CoreManager::getInstance().getCore()->getFPS();
+
+    if(cur_lang != strRepo->GetCurrentLanguage())
+    {
+        active = false;
+        firstrender = false;
+
+        cur_lang = strRepo->GetCurrentLanguage();
+        dialogue_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
+        visual_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
+
+        Show();
+
+    }
 
     if (!firstrender)
         firstrender = true;
-
-    if (speedable)
-    {
-        // here we should do something like
-        // ptext timeout = 20ms=50letters/s temporarily
-        // then when key is not held, return to normal speed
-
-        if (inputCtrl->isKeyHeld(Input::Keys::CIRCLE))
-            SpeedUp();
-    }
-
-    if (ready)
-    {
-        // advance current text id
-
-        if (inputCtrl->isKeyPressed(Input::Keys::CROSS))
-        {
-            NextDialog();
-        }
-    }
-
-    //for (unsigned int i = 0; i < dialogue_strings.size(); i++)
-    //    ptext[i].update(window);
 
     if (active)
     {

@@ -44,6 +44,8 @@ public:
     int quality = 0;
     int fontSize = 26;
 
+    std::string cur_lang = "us";
+
     bool ready = false;
     bool done = false;
     bool canwrite = false;
