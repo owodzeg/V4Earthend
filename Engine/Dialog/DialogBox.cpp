@@ -54,6 +54,48 @@ void PataDialogBox::Create(std::string font, sf::String text, std::vector<sf::St
     option = t_options.size() - 1;
 }
 
+void PataDialogBox::CreateCustom(std::string font, sf::String text, std::vector<sf::String> options, int qualitySetting, int type)
+{
+    SPDLOG_DEBUG("Creating new PataDialogBox");
+
+    switch(type)
+    {
+        case 1: {
+            t_dialogType.setFont(font);
+            t_dialogType.setCharacterSize(16);
+            t_dialogType.setTextQuality(qualitySetting);
+            t_dialogType.setStringKey("dialog_category1");
+            break;
+        }
+        case 2: {
+            t_dialogType.setFont(font);
+            t_dialogType.setCharacterSize(16);
+            t_dialogType.setTextQuality(qualitySetting);
+            t_dialogType.setStringKey("dialog_category2");
+            break;
+        }
+    }
+    t_dialogText.setFont(font);
+    t_dialogText.setCharacterSize(30);
+    t_dialogText.setTextQuality(qualitySetting);
+    t_dialogText.setStringKey(text);
+
+    for (unsigned int i = 0; i < options.size(); i++)
+    {
+        PText tmp;
+        tmp.setFont(font);
+        tmp.setCharacterSize(22);
+        tmp.setTextQuality(qualitySetting);
+        tmp.setString(options[i]);
+        t_options.push_back(tmp);
+        options_saved.push_back(options[i]);
+    }
+
+    arrow.loadFromFile("resources/graphics/ui/arrow.png", qualitySetting, 3);
+
+    option = t_options.size() - 1;
+}
+
 void PataDialogBox::Readjust()
 {
     width = 0;
