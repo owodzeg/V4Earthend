@@ -48,15 +48,22 @@ void MessageCloud::Create(int speed, sf::Vector2f start_pos, sf::Color color, bo
 
     dialogue_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
     dialogue_ptext.setTextQuality(q);
+    dialogue_ptext.setCharacterSize(fontSize);
     dialogue_ptext.setString("");
 
     visual_ptext.setFont(strRepo->GetFontNameForLanguage(strRepo->GetCurrentLanguage()));
     visual_ptext.setTextQuality(q);
+    visual_ptext.setCharacterSize(fontSize);
     visual_ptext.setString("");
 
     visual_ptext.force_nonspeech = true;
 
     SPDLOG_DEBUG("MessageCloud::Create(): finished");
+}
+
+void MessageCloud::setFontSize(int newFontSize)
+{
+    fontSize = newFontSize;
 }
 
 void MessageCloud::AddDialog(sf::String text, bool nextdialog)
@@ -93,8 +100,8 @@ void MessageCloud::Show()
         dialogue_ptext.draw();
         visual_ptext.draw();
 
-        dest_xsize = visual_ptext.getLocalBounds().width + 210 + (visual_ptext.getLocalBounds().width / 30);
-        dest_ysize = visual_ptext.getLocalBounds().height + 210 + (visual_ptext.getLocalBounds().height / 4.5);
+        dest_xsize = visual_ptext.getLocalBounds().width + 150 + (visual_ptext.getLocalBounds().width / 30);
+        dest_ysize = visual_ptext.getLocalBounds().height + 150 + (visual_ptext.getLocalBounds().height / 4.5);
 
         text_timeout.restart();
 
@@ -135,8 +142,8 @@ void MessageCloud::NextDialog()
         dialogue_ptext.draw();
         visual_ptext.draw();
 
-        dest_xsize = visual_ptext.getLocalBounds().width + 210 + (visual_ptext.getLocalBounds().width / 30);
-        dest_ysize = visual_ptext.getLocalBounds().height + 210 + (visual_ptext.getLocalBounds().height / 4.5);
+        dest_xsize = visual_ptext.getLocalBounds().width + 150 + (visual_ptext.getLocalBounds().width / 30);
+        dest_ysize = visual_ptext.getLocalBounds().height + 150 + (visual_ptext.getLocalBounds().height / 4.5);
 
         text_timeout.restart();
     } else

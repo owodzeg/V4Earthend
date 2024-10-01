@@ -42,6 +42,7 @@ public:
     float arrow_y = 0;
 
     int quality = 0;
+    int fontSize = 26;
 
     bool ready = false;
     bool done = false;
@@ -60,6 +61,7 @@ public:
     MessageCloud();
     void setSize(float new_x, float new_y);
     void Create(int speed, sf::Vector2f start_pos, sf::Color color, bool can_speedup, int q);
+    void setFontSize(int newFontSize);
     void AddDialog(sf::String text, bool nextdialog);
     void NextDialog();
     void SpeedUp();
