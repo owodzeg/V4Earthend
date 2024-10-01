@@ -1375,6 +1375,10 @@ void Entry::draw()
                     pon_greet.setAnimationSpeed(0); // workaround for lack of animation stalling
                     pon_greet.setGlobalPosition(sf::Vector2f(cam_placement*3 + 230, 1612));
                 }
+
+                std::filesystem::remove("loginDetails.dat");
+                worker->all_branches.clear();
+                worker->all_branches.push_back("main");
             }
         }
         if(mouse.x > 503+710*4-pedestal.getGlobalBounds().width/2 && mouse.x < 503+710*4+pedestal.getGlobalBounds().width/2 && mouse.y >= 1200 && mouse.y <= 2160)
