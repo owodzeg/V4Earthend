@@ -1010,6 +1010,14 @@ void Entry::draw()
         p_news_header.setPosition(cam_placement*3 + 3360, 90);
         p_news_header.draw();
 
+        curBranch.setFont(font);
+        curBranch.setCharacterSize(36);
+        curBranch.setString("branch: "+worker->branch);
+        curBranch.setOrigin(curBranch.getLocalBounds().width/2, curBranch.getLocalBounds().height/2);
+        curBranch.setPosition(cam_placement*3 + 3360, 2000);
+        curBranch.setColor(sf::Color::White);
+        curBranch.draw();
+
         auto pos = p_news_header.getPosition();
         auto bounds = p_news_header.getGlobalBounds();
 
