@@ -65,7 +65,7 @@ void InputController::cleanExpiredMessages()
 {
     mtx.lock();
     // cleanup expired messages
-    int messageExpirationTime = 33; // milliseconds. set at 30 fps
+    int messageExpirationTime = 100; // milliseconds. 30 fps didnt work so clean after 100 ms it is
     uint64_t currentTime = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
     messages.erase(std::remove_if(messages.begin(), messages.end(), 
